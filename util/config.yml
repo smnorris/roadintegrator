@@ -1,0 +1,28 @@
+# -----------------
+# input definitions
+# -----------------
+datalist: road_inputs.csv
+tilelist: tiles.csv
+grid: WHSE_BASEMAPPING.BCGS_20K_GRID
+
+# -----------------
+# path lookups
+# Define path shortcuts used in datalist other than $BCGW and $TMP here
+# -----------------
+DSSWHSE: Q:\\dsswhse
+
+# -----------------
+# output feature classes and files
+# -----------------
+
+# -----------------
+# misc config settings
+# -----------------
+projection: NAD_1983_BC_Environment_Albers.prj   # all layers are matched to this
+processes: 8                                     # how many cores to use
+tmpdir: roadintegrator                           # folder to create and write to on T
+
+# -----------------
+# if your BCGW user name is different from your IDIR name, set here (and uncomment)
+# -----------------
+# BCGW_USR: username

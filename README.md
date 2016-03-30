@@ -1,93 +1,57 @@
-# Road Integration   (Simon Norris)
+# roadintegrator
 
-## Set up / install dependencies
+Collect various BC road data sources, preprocess and tile, then use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer. 
 
-The script is called from the command line. Ensure that your python path is correct
-by creating a DOS launch file (it doesn't seem possible to modify environment settings
-on GTS) as noted here:
-https://sites.google.com/site/bcgeopython/examples/installing-pip
+Note that the conflation process is an approximation and the output should not be considered definitive. Output is for specific CE reporting tools only; for other projects please use the various road data sources appropriately.
 
-    If you need to run python script from the command line routinely and you do not have 
-    the ability to modify your PATH environment variable, or for some reason do not want to 
-    (say multiple python installs, and want the ability to switch back and forth) you can create 
-    your own dos launch file that will setup any number of environment variables before the DOS 
-    prompt appears.  So to do this:
-    
-    1) Open up a text editor
-    2) Add the following lines to the text editor:
-    
-    set PATH=<path to python install>; <path to python install>\Scripts;%PATH%
-    cmd /p
-    
-    3) Now save the file (I like to keep this one on my desktop) and make sure the file has a .cmd suffix.
-    
-    Now test by double clicking on your file from and explorer.  It should open up a dos prompt.  
-    Test to make sure the paths have actually been set by trying to call python.  
+## Requirements
 
-The road_integrator.py script requires these additional python libraries:
-- click
+- access to BC Government ArcGIS terminal server
+- valid BCGW credentials
+- FME (tested on 2012+)
+- ArcGIS (tested on 10.1+)
+- Python 2.7 
 - sqlalchemy
+- click
 
-If these are not installed on the GTS machine you are using, install from command line opened
-with the method outlined above:
+## Setup
+
+Open a command line window by double clicking the `\util\python64_10_x.cmd` file matching the version of ArcGIS installed on the server you are using. Using pip, ensure the required python libraries are available:
 ```
 pip install click
 pip install sqlalchemy
 ```
-Note that your current directory must be on a drive that is local to the server (C:, T:)
- ip will bail if the command is called from a network drive such as W: or Q: (I have no idea why)
+(if pip is not installed, see [installing pip](https://pip.pypa.io/en/stable/installing/)
 
-If pip is not available, install pip (python's package manager) using the latest
-method: https://pip.pypa.io/en/latest/installing.html (Kevin's method noted in the prev
-link is no longer current) 
- 
+## Usage
 
-## Steps for producing a single roads layer:
+1. Modify configuration files as required:  
+    - `road_inputs.csv` - definitions (layer, query, included attributes, etc) for all inputs to analysis  
+    (other than RESULTS, which is hard coded in the .fmw file)
+    - `tiles.csv` - list of 1:250,000 tiles to process
+    - `config.yml` - misc config options
+  
+2. Extract source data to working folder:  
+`> python roadintegrator extract`  
+Note that the extract process tiles each source layer by BCGS 1:20,000 sheet  
 
-1. Create road linework from RESULTS road polygons by running `ResultsPolyRoads2Line_FME2012.fmw`. 
-Be sure to use FME2012 (on ArcGIS 10.1 server) as FME2014 chokes on the process. This process 
-interprets the medial axis of input polys (CenterlineReplacer transformer). 
-Results polys defined as roads are where:
+3. With extract complete, consider manually backing up the extract .gdb to a network drive in event of server reboot during processing  
 
-```
-    STOCKING_STATUS_CODE = 'NP' 
-    AND STOCKING_TYPE_CODE IN ( 'RD' , 'UNN' ) 
-    AND SILV_POLYGON_NUMBER NOT IN ('Landing', 'LND') 
-```
+4. Run the integration/conflation job:  
+`> python roadintegrator integrate`  
+Note that this spawns as many processess as specified in `config.yml` - if the number is greater than 4 or 5 it will consume a significant portion of the server's resources. Please be aware of other users and only run jobs with a large number of processes during non-peak hours.  
 
-2. Make any necessary adjustments to `inputs.csv`, defining source layers, queries, attributes to 
-retain in output, etc. Also, if necessary make any adjustments to paths of input or output data 
-within the script `road_integrator.py`. All outputs are currently directed to T: to help speed up 
-the job. Input .gdb is also presumed to reside on T: (be sure to maintain a copy of source data on 
-a network drive in event of server reboot during processing)
+6. When processing is complete, copy output layer to desired location on a network drive.
 
-3. Extract all source data to single .gdb, tiling sources by 1:20,000 sheet.
-From command line, run the script with the -e flag (for extract):
+## Methodology
 
-`python road_integrator.py -e`
+- extract all road sources noted in `road_inputs.csv`
+- extract RESULTS polygon roads, converting features to lines by interpreting the the medial axis of input polys (CenterlineReplacer transformer)
+- tile all road sources with 1:20,000 grid
+- breaking processing into NTS 1:250,000 tiles, for each tile
+    + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on input data priorities specified in `road_inputs.csv`
+    + with all linework within the tolerance of `Integrage` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
+    + merge the resulting layers into a single output roads layer for the given tile
+- merge all tiles into a provincial roads layer
+- 
 
-4. Ensure that the table logging progress of the job (`road_status` on GEOPRD, there may be better 
-locations for this) is reset if necessary. Any tile where `start_time` is NULL will be re-processed. 
-In preparation for re-run of the entire province, apply 
-
-```
-UPDATE road_status SET start_time = NULL;
-UPDATE road_status SET end_time = NULL;
-UPDATE road_status SET output_file = NULL;
-```
-It might be easier to move the log/status table to a local file - but as the table is simultaneously 
-written to by multiple processes, it is handy to get Oracle to manage updates.
-
-5. With all data extracted and indexed in `RoadSources.gdb` and the log table updated as necessary, 
-run the integration part of the script in as many terminal windows as required. Each process will pull 
-new tiles until there are no tiles left.
-At command line, from a local drive (T: or C:, Python can't find cx_Oracle when called from a network 
-drive, no idea why) `python road_integrator.py -j 1` where 1 is a distinct number for each process (in 
-first cmd window, enter `-j 1`, in second cmd window enter `-j 2`, etc etc). 
-
-6. When processing is complete, use the ArcGIS Merge tool to integrate all outputs into a single layer.
-
-Note 
-It is likely possible to get python to handle the spawning of multiple processes rather than using this 
-crude method of opening individual cmd windows. 
-See http://blogs.esri.com/esri/arcgis/2012/09/26/distributed-processing-with-arcgis-part-1/
