@@ -1,4 +1,4 @@
-import os
+fimport os
 import csv
 import tempfile
 import uuid
@@ -21,6 +21,7 @@ PARAMETER['Standard_Parallel_2',58.5],
 PARAMETER['Latitude_Of_Origin',45.0],
 UNIT['Meter',1.0]];IsHighPrecision
 """
+
 
 def get_fields(layer):
     """
@@ -185,6 +186,18 @@ def create_wksp(path, gdb):
     if not arcpy.Exists(wksp):
         arcpy.CreateFileGDB_management(path, gdb)
     return os.path.join(path, gdb)
+
+
+def add_unique_id(table, targetcolumn, sourcecolumn="OBJECTID"):
+    """
+    Add a new integer column to the specified table, set it to value of
+    existing column (generally the objectid)
+    """
+    arcpy.AddField_management(table, targetcolumn, "INTEGER")
+    with arcpy.da.UpdateCursor(table, [sourcecolumn, targetcolumn]) as cursor:
+        for row in cursor:
+            row[1] = int(row[0])
+            cursor.updateRow(row)
 
 
 def remap(table, remapdict, sql=None):
