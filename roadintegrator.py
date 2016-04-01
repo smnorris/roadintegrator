@@ -9,6 +9,47 @@ import arcpy
 import arcutil
 
 
+def initialize_output(param):
+    """
+    Create empty output feature class
+    """
+    wksp, fc  = os.path.split(out_fc)
+    # set workspace to in_memory in an attempt to speed things up a bit
+    arcpy.env.workspace = 'in_memory' #wksp
+    # overwrite any existing outputs
+    arcpy.env.overwriteOutput = True
+
+    # create output feature class
+    if not arcpy.Exists(out_fc):
+        arcpy.CreateFeatureclass_management(wksp, fc,
+                                            "POLYLINE", "", "", "",
+                                            BC_ALBERS_SR)
+        # add all columns noted in source .csv
+        for road in param["layers"]:
+            # if the primary key is remapped to a new name in the source .csv,
+            # handle that here
+            if road["new_primary_key"]:
+                road["primary_key"] = road["new_primary_key"]
+            fields = arcutil.clean_fieldlist(road["primary_key"])+arcutil.clean_fieldlist(road["fields"])
+            for field in arcpy.ListFields(os.path.join(srcWksp, road["alias"])):
+                if field.name in fields:
+                    # only add a field once
+                    # (ften primary key is listed twice as ften is coming from
+                    # two source layers - they are mutually exclusive so a single
+                    # key should be fine)
+                    if field.name not in [f.name for f in arcpy.ListFields(outFC)]:
+                        arcpy.AddField_management(outFC,
+                                                  field.name,
+                                                  ARC_TYPE_LOOKUP[field.type],
+                                                  field.precision,
+                                                  field.scale,
+                                                  field.length)
+            # add date and source fields
+            arcpy.AddField_management(outFC,
+                                      "BCGW_SOURCE", "TEXT","", "", "255")
+            arcpy.AddField_management(outFC,
+                                      "BCGW_EXTRACTION_DATE",
+                                      "TEXT","", "", "255")
 def setup():
     """
     Read paramaters file, create required folders, .gdbs, connections
@@ -58,9 +99,64 @@ def setup():
     pathvars = set([s.split("\\")[0].strip("$") for s in sources])
     for layer in param["layers"]:
         for placeholder in pathvars:
-            layer.update({"source": layer["source"].replace(placeholder,
+            layer.update({"source": layer["source"].replace("$"+placeholder,
                                                             param[placeholder])})
+            #print layer["source"].replace(placeholder, param[placeholder])
     return param
+
+
+def get_source_data(param):
+    """
+    Get required source layers listed in road_inputs.csv
+    """
+    # extract each road layer
+    wksp = param["src_wksp"]
+    click.echo("Extracting, tiling and indexing source data")
+    with click.progressbar(param["layers"]) as bar:
+        for roads in bar:
+            if not arcpy.Exists(os.path.join(wksp, roads["alias"])):
+                # Cut inputs with specified grid
+                # Since road data isn't too dense (compared to VRI anyway),
+                # we can just use the intersect tool for entire layers
+                # and do this in-memory
+                if roads["tiled"] != 'N':
+                    arcutil.copy_data(roads["source"],
+                              os.path.join("in_memory", roads["alias"]),
+                              roads["query"])
+                    arcpy.Intersect_analysis([os.path.join("in_memory",
+                                                           roads["alias"]),
+                                              os.path.join(wksp, "grid")],
+                                             os.path.join(wksp, roads["alias"]))
+                    arcpy.AddIndex_management(os.path.join(wksp, roads["alias"]),
+                                              "MAP_TILE",
+                                              roads["alias"]+'map_tile_idx')
+                    #arcpy.Delete_management(os.path.join(wksp,
+                    #                                     roads["alias"]+"_prelim"))
+                # simply copy pre-tiled data, making sure tile column is standard
+                if roads["tiled"] != 'Y':
+                    arcutil.copy_data(roads["source"],
+                                      os.path.join(wksp, roads["alias"]),
+                                      roads["query"])
+                    if roads["tile_column"] != "MAP_TILE":
+                        arcpy.AddField_management(os.path.join(wksp, roads["alias"]),
+                                                  "MAP_TILE", "TEXT","", "", "32")
+                        arcpy.AddIndex_management(os.path.join(wksp, roads["alias"]),
+                                                 "MAP_TILE",
+                                                 roads["alias"]+'map_tile_idx')
+                # add date and source
+                arcpy.AddField_management(os.path.join(wksp, roads["alias"]),
+                                          "BCGW_SOURCE", "TEXT","", "", "255")
+                arcpy.AddField_management(os.path.join(wksp, roads["alias"]),
+                                          "BCGW_EXTRACTION_DATE",
+                                          "TEXT","", "", "255")
+                arcutil.remap(os.path.join(wksp, roads["alias"]),
+                              {"BCGW_EXTRACTION_DATE": date.today().isoformat()})
+                if roads["noted_source"]:
+                    bcgw_source = os.path.split(roads["noted_source"])[1]
+                else:
+                    bcgw_source = os.path.split(roads["source"])[1]
+                arcutil.remap(os.path.join(wksp, roads["alias"]),
+                              {"BCGW_SOURCE": bcgw_source})
 
 
 # define commands
@@ -76,7 +172,9 @@ def extract(layers):
     """
     Extract and tile required source layers
     """
-    setup()
+    param = setup()
+    get_source_data(param)
+
 
 
 @cli.command()
@@ -84,7 +182,8 @@ def integrate():
     """
     Combine all road layers into single output
     """
-    setup()
+    param = setup()
+
 
 if __name__ == '__main__':
     cli()
