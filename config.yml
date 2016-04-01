@@ -3,8 +3,8 @@
 # -----------------
 datalist: road_inputs.csv               # file containing list of source layers
 tilelist: tiles.csv                     # file containing list of tiles to process (250k tiles)
-grid: WHSE_BASEMAPPING.BCGS_20K_GRID    # BCGW tile layer to cut source / processing
-
+grid: WHSE_BASEMAPPING.BCGS_20K_GRID    # tile layer to cut source / processing
+tile_column: MAP_TILE                   # tile field in tile layer
 # -----------------
 # output feature classes and files
 # -----------------

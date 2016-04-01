@@ -285,18 +285,3 @@ def repair_all(wksp):
     for layer in layers:
         arcpy.RepairGeometry_management(layer)
     arcpy.env.workspace = ow
-
-
-def get_grid(ingrid, outpath, gridname):
-    """Download grid from BCGW"""
-    outgrid = os.path.join(outpath, gridname)
-    copy_data(ingrid,
-              outgrid,
-              fieldList="MAP_TILE")
-    arcpy.AddField_management(outgrid, "bcgs_20k_grid", "TEXT", "", "", 32)
-    arcpy.CalculateField_management(outgrid,
-                                    "bcgs_20k_grid",
-                                    "!MAP_TILE!",
-                                    "PYTHON_9.3")
-    arcpy.DeleteField_management(outgrid, "MAP_TILE")
-    return outgrid
