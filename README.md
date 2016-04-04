@@ -61,13 +61,14 @@ Consider manually backing up the extract .gdb to a network drive in event of ser
 
 Integrate command only, 250k tiles:
 
-6 cores: 21.75min
-8 cores: 16.9min
-10 cores: 14.9min
+6 cores: 21.75min;
+8 cores: 16.9min;
+10 cores: 14.9min;
 
 ## Todo
 
-For more speed, extract could be multicore as well
+- figure out why RESULTS fmw won't work on FME 2014, 2013 won't be available forever
+- multi core extract for more speed
 
 
 
