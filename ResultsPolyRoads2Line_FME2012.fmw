@@ -2,56 +2,57 @@
 #! <WORKSPACE
 #    
 #    
-#    Windows command-line to run this workspace:
+#    Command-line to run this workspace:
 #    
 #    
 #    fme.exe ResultsPolyRoads2Line_FME2012.fmw
 #          --SourceDataset_GEODATABASE_SDE sde
-#          --DestDataset_FILEGDB "Q:\projects\clients_new\mnro\Road AA\Data\scripts\data\ResultsRoads.gdb"
+#          --DestDataset_FILEGDB T:\roadintegrator\results.gdb
 #    
 #    
-#! LAST_SAVE_BUILD="FME(R) 2012 SP2 (20120417 - Build 12238 - WIN32)"
-#! MAX_LOG_FEATURES="200"
-#! SOURCE="NONE"
-#! LEGAL_TERMS_CONDITIONS=""
-#! END_TCL=""
-#! DESTINATION="NONE"
-#! SHOW_BOOKMARKS="true"
+#! PASSWORD=""
 #! GRID_VISIBLE="false"
-#! SHOW_ANNOTATIONS="true"
+#! VIEW_POSITION="0 0"
+#! SHOW_INFO_NODES="true"
+#! ATTR_TYPE_ENCODING="SDF"
+#! FME_STROKE_MAX_DEVIATION="0"
+#! GRID_SNAPTO="false"
+#! BEGIN_PYTHON=""
+#! FME_GEOMETRY_HANDLING="Enhanced"
+#! DESCRIPTION=""
+#! GRID_HEIGHT="50"
+#! TITLE=""
+#! SHOW_BOOKMARKS="true"
+#! MAX_LOG_FEATURES="200"
+#! END_TCL=""
+#! FME_BUILD_NUM="13450"
+#! ZOOM_SCALE="100"
+#! CATEGORY=""
+#! REDIRECT_TERMINATORS="NONE"
+#! LEGAL_TERMS_CONDITIONS=""
+#! FME_REPROJECTION_ENGINE="FME"
+#! USAGE=""
+#! END_PYTHON=""
+#! HISTORY=""
+#! GRID_WIDTH="50"
+#! REQUIREMENTS_KEYWORD=""
+#! SOURCE_ROUTING_FILE=""
+#! DESTINATION_ROUTING_FILE=""
+#! DESTINATION="NONE"
+#! LAST_SAVE_DATE="2016-04-01T14:43:12"
+#! FME_IMPLICIT_CSMAP_REPROJECTION_MODE="Datum"
+#! WORKSPACE_VERSION="1"
+#! SOURCE="NONE"
+#! LAST_SAVE_BUILD="2013 SP1 (20130325 - Build 13450 - WIN32)"
 #! FME_SERVER_SERVICES=""
 #! LOG_MAX_RECORDED_FEATURES="200"
-#! END_PYTHON=""
-#! CATEGORY=""
-#! REQUIREMENTS_KEYWORD=""
-#! GRID_HEIGHT="50"
-#! FME_REPROJECTION_ENGINE="FME"
-#! FME_BUILD_NUM="12238"
-#! SHOW_INFO_NODES="true"
-#! BEGIN_PYTHON=""
-#! DESCRIPTION=""
-#! GRID_SNAPTO="false"
-#! GRID_WIDTH="50"
-#! BEGIN_TCL=""
-#! FME_STROKE_MAX_DEVIATION="0"
 #! LOG_FILE=""
-#! HISTORY=""
-#! VIEW_POSITION="0 0"
-#! SOURCE_ROUTING_FILE=""
-#! ZOOM_SCALE="100"
-#! PASSWORD=""
-#! VIEW_PAGE_BREAKS="false"
-#! WORKSPACE_VERSION="1"
-#! DESTINATION_ROUTING_FILE=""
-#! LAST_SAVE_DATE="2015-03-05T13:52:53"
-#! FME_GEOMETRY_HANDLING="Enhanced"
-#! TITLE=""
-#! USAGE=""
-#! IGNORE_READER_FAILURE="No"
 #! REQUIREMENTS=""
+#! BEGIN_TCL=""
+#! SHOW_ANNOTATIONS="true"
+#! VIEW_PAGE_BREAKS="false"
+#! IGNORE_READER_FAILURE="No"
 #! WARN_INVALID_XFORM_PARAM="Yes"
-#! REDIRECT_TERMINATORS="NONE"
-#! ATTR_TYPE_ENCODING="SDF"
 #! >
 #! <DATASETS>
 #! <DATASET
@@ -67,7 +68,7 @@
 #! WRITE_DEFS="true"
 #! DEFLINE_TEMPLATE="geodb_type {FME_GEN_GEOMETRY}"
 #! DEFLINE_ATTRS="true"
-#! EXPOSABLE_ATTRS="geodb_junction_element_count integer geodb_dim_line_z double geodb_right_to_left boolean fme_text_string char(50) geodb_dim_end_dimension_z double geodb_font_bold boolean geodb_dim_style_id integer geodb_font_italic boolean geodb_junction_feature_count integer geodb_text_leader_line_anchor_point char(254) geodb_metadata_string char(254) geodb_linked_feature_id integer geodb_text_word_spacing double geodb_text_leader_line char(254) geodb_element_index integer geodb_font_underline boolean geodb_primary_axis double geodb_raster_compression_type char(100) geodb_dim_marker_display smallint geodb_arc_start_x double geodb_dim_using_custom_length boolean geodb_font_name char(254) geodb_dim_line_x double geodb_text_angle double geodb_text_x_offset double geodb_dim_end_dimension_x double fme_type char(50) geodb_dim_begin_dimension_z double geodb_text_string_with_format_tags char(254) geodb_font_strikethrough boolean multi_reader_full_id integer geodb_dim_text_y double geodb_dim_begin_dimension_y double geodb_raster_pyramid_resample_type char(100) geodb_start_angle double geodb_dim_extn_line_angle double geodb_font_size double geodb_feature_is_simple boolean geodb_rel_origin_oid integer geodb_type char(25) geodb_topological_configuration char(6) geodb_dim_begin_dimension_x double geodb_dim_length double geodb_text_line_spacing double geodb_dim_custom_length double geodb_measures char(254) geodb_text_y_offset double geodb_arc_start_y double geodb_element_id integer geodb_text_color char(254) geodb_from_junction_element_id integer geodb_h_align char(50) geodb_text_scale boolean fme_feature_type char(50) geodb_dim_text_x double fme_basename char(50) geodb_text_string char(254) geodb_edge_feature_count integer geodb_text_character_width double geodb_v_align char(50) geodb_ancillary_role char(7) fme_secondary_axis double fme_fill_color char(50) geodb_dim_extn_line_display smallint fme_primary_axis double geodb_dim_end_dimension_y double geodb_dim_text_angle double geodb_rel_destination_oid integer fme_start_angle double geodb_arc_end_y double geodb_font_weight smallint fme_text_size double geodb_arc_end_x double fme_color char(50) multi_reader_id integer geodb_sweep_angle double geodb_secondary_axis double geodb_color char(50) geodb_raster_compression_quality integer geodb_arc_start_z double geodb_text_ref_scale double geodb_dim_line_display smallint geodb_rotation double geodb_font_charset smallint geodb_to_junction_element_id integer multi_reader_type char(50) geodb_dim_type smallint fme_geometry fme_char(50) geodb_text_part_count integer multi_reader_keyword char(50) fme_sweep_angle double geodb_original_arc_direction char(17) geodb_dim_text_z double fme_rotation double geodb_dim_line_y double fme_dataset char(50) geodb_text_char_spacing double geodb_feature_has_relationships boolean geodb_text_break_char integer geodb_arc_end_z double geodb_text_clip boolean geodb_edge_element_count integer geodb_raster_pyramid_level integer geodb_text_size double"
+#! EXPOSABLE_ATTRS="geodb_text_leader_line_anchor_point char(254) geodb_dim_length double geodb_v_align char(50) geodb_rel_destination_oid integer multi_reader_type char(50) geodb_edge_feature_count integer geodb_raster_compression_quality integer geodb_font_name char(254) fme_color char(50) geodb_from_junction_element_id integer geodb_raster_pyramid_resample_type char(100) geodb_rel_origin_oid integer fme_text_string char(50) geodb_raster_compression_type char(100) fme_type char(50) geodb_original_arc_direction char(17) geodb_metadata_string char(254) geodb_dim_text_x double geodb_dim_text_y double multi_reader_keyword char(50) geodb_dim_text_z double geodb_text_leader_line char(254) geodb_element_id integer geodb_font_italic boolean geodb_text_line_spacing double fme_basename char(50) geodb_text_ref_scale double geodb_topological_configuration char(6) geodb_start_angle double geodb_h_align char(50) fme_secondary_axis double geodb_text_x_offset double geodb_sweep_angle double fme_feature_type char(50) geodb_arc_end_x double geodb_dim_text_angle double geodb_ancillary_role char(7) geodb_arc_end_y double geodb_font_size double geodb_arc_end_z double fme_text_size double geodb_text_size double geodb_raster_pyramid_level integer fme_sweep_angle double geodb_arc_start_x double geodb_arc_start_y double geodb_arc_start_z double geodb_dim_using_custom_length boolean geodb_text_char_spacing double fme_primary_axis double geodb_text_string char(254) geodb_font_strikethrough boolean geodb_text_character_width double fme_dataset char(50) geodb_rotation double fme_fill_color char(50) geodb_secondary_axis double geodb_text_y_offset double geodb_font_underline boolean geodb_text_color char(254) geodb_font_bold boolean geodb_dim_style_id integer geodb_text_scale boolean geodb_measures char(254) geodb_text_part_count integer geodb_type char(25) geodb_dim_line_display smallint geodb_text_clip boolean geodb_to_junction_element_id integer fme_geometry fme_char(50) geodb_text_string_with_format_tags char(254) multi_reader_id integer geodb_text_break_char integer geodb_dim_extn_line_display smallint geodb_dim_type smallint geodb_dim_custom_length double geodb_dim_begin_dimension_x double geodb_dim_begin_dimension_y double geodb_dim_begin_dimension_z double geodb_feature_is_simple boolean geodb_primary_axis double geodb_right_to_left boolean geodb_dim_line_x double geodb_dim_end_dimension_x double geodb_dim_line_y double geodb_dim_end_dimension_y double geodb_dim_line_z double geodb_junction_feature_count integer geodb_dim_end_dimension_z double geodb_feature_has_relationships boolean geodb_text_word_spacing double geodb_linked_feature_id integer geodb_edge_element_count integer geodb_dim_marker_display smallint multi_reader_full_id integer fme_rotation double geodb_junction_element_count integer geodb_dim_extn_line_angle double fme_start_angle double geodb_font_weight smallint geodb_element_index integer geodb_text_angle double geodb_color char(50) geodb_font_charset smallint"
 #! DEFLINE_PARMS=""
 #! ATTR_INDEX_TYPES=""
 #! ATTR_NAME_INVALID_CHARS=""
@@ -75,11 +76,11 @@
 #! ENABLED="true"
 #! DYNAMIC_FEATURE_TYPES_LIST_ON_MERGE="true"
 #! GENERATE_FME_BUILD_NUM="12238"
-#! MIN_FEATURES=""
-#! START_FEATURE=""
 #! MAX_FEATURES=""
 #! COORDSYS=""
+#! MIN_FEATURES=""
 #! FEATURE_TYPES=""
+#! START_FEATURE=""
 #! >
 #! <METAFILE_PARAMETER
 #! NAME="ADVANCED_PARMS"
@@ -99,7 +100,7 @@
 #! WRITE_DEFS="true"
 #! DEFLINE_TEMPLATE="filegdb_type {FME_GEN_GEOMETRY}"
 #! DEFLINE_ATTRS="true"
-#! EXPOSABLE_ATTRS="fme_type text(50) fme_text_string text(50) fme_feature_type text(50) fme_basename text(50) fme_geometry fme_char(50) fme_sweep_angle double fme_rotation double fme_secondary_axis double fme_fill_color text(50) fme_dataset text(50) fme_primary_axis double fme_start_angle double fme_text_size double fme_color text(50)"
+#! EXPOSABLE_ATTRS="fme_secondary_axis double fme_text_string text(50) fme_fill_color text(50) fme_dataset text(50) fme_feature_type text(50) fme_text_size double fme_start_angle double fme_type text(50) fme_rotation double fme_geometry fme_char(50) fme_primary_axis double fme_sweep_angle double fme_basename text(50) fme_color text(50)"
 #! DEFLINE_PARMS="&quot;GUI CHOICE filegdb_drop_table YES%NO Drop Existing Table&quot; NO &quot;GUI CHOICE filegdb_truncate_table YES%NO Truncate Existing Table&quot; NO &quot;GUI TEXT filegdb_object_id_field Object ID Field&quot; OBJECTID &quot;GUI TEXT filegdb_object_id_alias Object ID Alias&quot; OBJECTID &quot;GUI TEXT filegdb_shape_field Shape Field&quot; SHAPE &quot;GUI TEXT filegdb_shape_alias Shape Alias&quot; SHAPE &quot;GUI TEXT filegdb_config_keyword Configuration Keyword&quot; DEFAULTS &quot;GUI OPTIONAL FLOAT filegdb_xy_tolerance XY Tolerance&quot; &quot;&quot; &quot;GUI FLOAT filegdb_z_tolerance Z Tolerance&quot; 0.001 "
 #! ATTR_INDEX_TYPES="indexed"
 #! ATTR_NAME_INVALID_CHARS="\\/&quot;:?*&lt;&gt;|[%# &apos;&amp;+-].^\{\}"
@@ -107,12 +108,12 @@
 #! ENABLED="true"
 #! DYNAMIC_FEATURE_TYPES_LIST_ON_MERGE="true"
 #! GENERATE_FME_BUILD_NUM="12238"
-#! FANOUT_SUFFIX=""
-#! FANOUT_ID_ATTR=""
+#! FANOUT_PREFIX=""
 #! COORDSYS=""
 #! FANOUT="No"
+#! FANOUT_SUFFIX=""
+#! FANOUT_ID_ATTR=""
 #! FANOUT_DIRECTORY=""
-#! FANOUT_PREFIX=""
 #! />
 #! </DATASETS>
 #! <DATA_TYPES>
@@ -604,7 +605,7 @@
 #! IS_SOURCE="true"
 #! NODE_NAME="WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW"
 #! IS_EDITABLE="false"
-#! IDENTIFIER="0"
+#! IDENTIFIER="1"
 #! FEAT_GEOMTYPE="geodb_polygon"
 #! POSITION="200 -200"
 #! ORDER="2"
@@ -947,15 +948,15 @@
 #! <FEAT_ATTRIBUTE ATTR_NAME="I_SPECIES_PERCENT_2" ATTR_TYPE="text(20)"/>
 #! <FEAT_ATTRIBUTE ATTR_NAME="TREE_COVER_PATTERN_CODE" ATTR_TYPE="text(20)"/>
 #! <FEAT_ATTRIBUTE ATTR_NAME="I4_INV_LABEL" ATTR_TYPE="text(20)"/>
+#! <DEFLINE_PARM PARM_NAME="filegdb_xy_tolerance" PARM_VALUE=""/>
+#! <DEFLINE_PARM PARM_NAME="filegdb_z_tolerance" PARM_VALUE="0.001"/>
+#! <DEFLINE_PARM PARM_NAME="filegdb_object_id_field" PARM_VALUE="OBJECTID"/>
+#! <DEFLINE_PARM PARM_NAME="filegdb_shape_alias" PARM_VALUE="SHAPE"/>
 #! <DEFLINE_PARM PARM_NAME="filegdb_truncate_table" PARM_VALUE="NO"/>
 #! <DEFLINE_PARM PARM_NAME="filegdb_object_id_alias" PARM_VALUE="OBJECTID"/>
-#! <DEFLINE_PARM PARM_NAME="filegdb_shape_field" PARM_VALUE="SHAPE"/>
 #! <DEFLINE_PARM PARM_NAME="filegdb_config_keyword" PARM_VALUE="DEFAULTS"/>
-#! <DEFLINE_PARM PARM_NAME="filegdb_object_id_field" PARM_VALUE="OBJECTID"/>
-#! <DEFLINE_PARM PARM_NAME="filegdb_xy_tolerance" PARM_VALUE=""/>
 #! <DEFLINE_PARM PARM_NAME="filegdb_drop_table" PARM_VALUE="NO"/>
-#! <DEFLINE_PARM PARM_NAME="filegdb_shape_alias" PARM_VALUE="SHAPE"/>
-#! <DEFLINE_PARM PARM_NAME="filegdb_z_tolerance" PARM_VALUE="0.001"/>
+#! <DEFLINE_PARM PARM_NAME="filegdb_shape_field" PARM_VALUE="SHAPE"/>
 #! </FEATURE_TYPE>
 #! </FEATURE_TYPES>
 #! <FMESERVER>
@@ -968,7 +969,7 @@
 #! />
 #! <GLOBAL_PARAMETER
 #! GUI_LINE="GUI DEST_GEODATABASE DestDataset_FILEGDB File Geodatabase|*.gdb Destination Geodatabase:"
-#! DEFAULT_VALUE="$(FME_MF_DIR)data\ResultsRoads.gdb"
+#! DEFAULT_VALUE="T:\roadintegrator\results.gdb"
 #! IS_STAND_ALONE="false"
 #! />
 #! </GLOBAL_PARAMETERS>
@@ -980,7 +981,7 @@
 #! </BOOKMARKS>
 #! <TRANSFORMERS>
 #! <TRANSFORMER
-#! IDENTIFIER="1"
+#! IDENTIFIER="4"
 #! TYPE="CenterLineReplacer"
 #! VERSION="1"
 #! POSITION="920 -131"
@@ -1147,26 +1148,26 @@
 #! <XFORM_ATTR ATTR_NAME="OBJECTID" IS_USER_CREATED="false" FEAT_INDEX="0"/>
 #! <XFORM_ATTR ATTR_NAME="GEOMETRY.AREA" IS_USER_CREATED="false" FEAT_INDEX="0"/>
 #! <XFORM_ATTR ATTR_NAME="GEOMETRY.LEN" IS_USER_CREATED="false" FEAT_INDEX="0"/>
-#! <XFORM_PARM PARM_NAME="PARAMETERS_GROUP" PARM_VALUE=""/>
-#! <XFORM_PARM PARM_NAME="TOLERANCE" PARM_VALUE=""/>
 #! <XFORM_PARM PARM_NAME="XFORMER_NAME" PARM_VALUE="CenterLineReplacer"/>
 #! <XFORM_PARM PARM_NAME="MODE" PARM_VALUE="Medial Axis"/>
 #! <XFORM_PARM PARM_NAME="TRANSFORMER_GROUP" PARM_VALUE=""/>
+#! <XFORM_PARM PARM_NAME="PARAMETERS_GROUP" PARM_VALUE=""/>
+#! <XFORM_PARM PARM_NAME="TOLERANCE" PARM_VALUE=""/>
 #! </TRANSFORMER>
 #! </TRANSFORMERS>
 #! <FEAT_LINKS>
 #! <FEAT_LINK
 #! IDENTIFIER="2"
-#! SOURCE_NODE="0"
-#! TARGET_NODE="1"
+#! SOURCE_NODE="1"
+#! TARGET_NODE="4"
 #! SOURCE_PORT_DESC="-1"
 #! TARGET_PORT_DESC="fi 0"
 #! ENABLED="true"
 #! EXTRA_POINTS=""
 #! />
 #! <FEAT_LINK
-#! IDENTIFIER="4"
-#! SOURCE_NODE="1"
+#! IDENTIFIER="5"
+#! SOURCE_NODE="4"
 #! TARGET_NODE="3"
 #! SOURCE_PORT_DESC="fo 0"
 #! TARGET_PORT_DESC="-1"
@@ -1189,51 +1190,11 @@ GUI IGNORE SourceDataset_GEODATABASE_SDE_1,GEODATABASE_SDE_IN_SERVER_GEODATABASE
 
 DEFAULT_MACRO SourceDataset_GEODATABASE_SDE sde
 GUI TEXT SourceDataset_GEODATABASE_SDE Source ESRI Geodatabase (ArcSDE) Dataset:
-DEFAULT_MACRO DestDataset_FILEGDB $(FME_MF_DIR)data\ResultsRoads.gdb
+INCLUDE [	if {[string equal -length 15 {FME_CONDITIONAL} {$(SourceDataset_GEODATABASE_SDE)} ] == 0} {		set encodedVal [FME_EncodeText {$(SourceDataset_GEODATABASE_SDE)}];  		puts "MACRO SourceDataset_GEODATABASE_SDE__FMEENCODED__ $encodedVal" ; } else { 		set encodedVal {$(SourceDataset_GEODATABASE_SDE)};  		puts "MACRO SourceDataset_GEODATABASE_SDE__FMEENCODED__ $encodedVal" ; };  ]
+
+DEFAULT_MACRO DestDataset_FILEGDB T:\roadintegrator\results.gdb
 GUI DEST_GEODATABASE DestDataset_FILEGDB File Geodatabase|*.gdb Destination Geodatabase:
-INCLUDE TCL
-proc __FME_ExpandMacros {text {maxlevels 100}} {
-   if { $maxlevels <= 0 } { return $text; }
-   set pattern [join {{\$} {\([^()$]*\)}} {}]
-   set indices [regexp -inline -all -indices $pattern $text]
-   if [llength $indices] {
-      foreach pair [lreverse $indices] {
-         lassign $pair start end
-         set replacement {}
-         set replacement $::FME_MacroValues([string range $text [expr $start + 2] [expr $end - 1]])
-         set text [string replace $text $start $end $replacement]
-      }
-      return [__FME_ExpandMacros $text [expr $maxlevels - 1]]
-   }
-   return $text
-}
-
-proc __FME_ExpandEnvVars {text {maxlevels 100}} {
-   if { $maxlevels <= 0 } { return $text; }
-   set pattern [join {{\$} {\{[^\{\}$]*\}}} {}]
-   set indices [regexp -inline -all -indices $pattern $text]
-   if [llength $indices] {
-      foreach pair [lreverse $indices] {
-         lassign $pair start end
-         set replacement {}
-         set replacement $::env([string range $text [expr $start + 2] [expr $end - 1]])
-         set text [string replace $text $start $end $replacement]
-      }
-      return [__FME_ExpandEnvVars $text [expr $maxlevels - 1]]
-   }
-   return $text
-}
-
-proc __FME_EvalAndEncodeMacro {macroName} {
-   set macroVal {}
-   catch { set macroVal [__FME_ExpandMacros $::FME_MacroValues($macroName)] }
-   catch { set macroVal [__FME_ExpandEnvVars $macroVal] }
-   return [FME_EncodeText $macroVal]
-}
-END_INCLUDE
-INCLUDE [	puts "MACRO SourceDataset_GEODATABASE_SDE__FMEENCODED__ [__FME_EvalAndEncodeMacro SourceDataset_GEODATABASE_SDE]" ;   ]
-
-INCLUDE [	puts "MACRO DestDataset_FILEGDB__FMEENCODED__ [__FME_EvalAndEncodeMacro DestDataset_FILEGDB]" ;   ]
+INCLUDE [	if {[string equal -length 15 {FME_CONDITIONAL} {$(DestDataset_FILEGDB)} ] == 0} {		set encodedVal [FME_EncodeText {$(DestDataset_FILEGDB)}];  		puts "MACRO DestDataset_FILEGDB__FMEENCODED__ $encodedVal" ; } else { 		set encodedVal {$(DestDataset_FILEGDB)};  		puts "MACRO DestDataset_FILEGDB__FMEENCODED__ $encodedVal" ; };  ]
 
 INCLUDE [ if {{$(SourceDataset_GEODATABASE_SDE)} == {}} { puts_real {Parameter 'SourceDataset_GEODATABASE_SDE' must be given a value.}; exit 1; }; ]
 INCLUDE [ if {{$(DestDataset_FILEGDB)} == {}} { puts_real {Parameter 'DestDataset_FILEGDB' must be given a value.}; exit 1; }; ]
@@ -1242,8 +1203,11 @@ INCLUDE [ if {{$(DestDataset_FILEGDB)} == {}} { puts_real {Parameter 'DestDatase
 READER_TYPE GEODATABASE_SDE
 READER_KEYWORD GEODATABASE_SDE_1
 READER_GEN_DIRECTIVES INSTANCE,port:5153,VERSION_TYPE,Connect<space>using<space>a<space>Transactional<space>Version,HISTORICAL_VERSION_NAME,,USE_SEARCH_ENVELOPE,NO,TRANSLATE_SPATIAL_DATA_ONLY,no,GEODATABASE_SDE_EXPOSE_FORMAT_ATTRS,,RESOLVE_SUBTYPE_NAMES,yes,_MERGE_SCHEMAS,YES,SEARCH_ENVELOPE_MAXY,0,SEARCH_ENVELOPE_MAXX,0,CONNECTION_FILE,,SPLIT_COMPLEX_EDGES,no,IGNORE_RELATIONSHIP_INFO,yes,SERVER,slkux1.env.gov.bc.ca,USERID,sinorris,HISTORICAL_VERSION_TIMESTAMP,,CONNECTION,Parameters,IGNORE_NETWORK_INFO,no,SPLIT_MULTI_PART_ANNOS,no,WHERE,STOCKING_STATUS_CODE<space>=<space><apos>NP<apos><space>AND<space>STOCKING_TYPE_CODE<space>IN<space><openparen><space><apos>RD<apos><space><comma><space><apos>UNN<apos><space><closeparen><space>AND<space>SILV_POLYGON_NUMBER<space>NOT<space>IN<space><openparen><apos>Landing<apos><comma><space><apos>LND<apos><closeparen>,VERSION,SDE.DEFAULT,SEARCH_ENVELOPE_MINX,0,TABLELIST,WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW,CLIP_TO_ENVELOPE,NO,REMOVE_TABLE_QUALIFIER,NO,SEARCH_ENVELOPE_MINY,0,RESOLVE_DOMAINS,no
-WRITER_TYPE FILEGDB
-WRITER_KEYWORD FILEGDB_1
+WRITER_TYPE MULTI_WRITER
+MULTI_WRITER_DATASET_ORDER BY_ID
+MULTI_WRITER_FIRST_WRITER_ID 0
+MULTI_WRITER_TYPE{0} FILEGDB
+MULTI_WRITER_KEYWORD{0} FILEGDB_1
 #! END_WB_HEADER
 #! START_WB_HEADER
 MACRO WB_KEYWORD "GEODATABASE_SDE_1"
@@ -1291,7 +1255,7 @@ GUI TEXT GEODATABASE_SDE_IN_USERID_GEODATABASE_SDE_1 Username:
 GEODATABASE_SDE_1_USERID "$(GEODATABASE_SDE_IN_USERID_GEODATABASE_SDE_1)"
 # =============================================================================
 #
-DEFAULT_MACRO GEODATABASE_SDE_IN_PASSWORD_GEODATABASE_SDE_1 Rockslide1
+DEFAULT_MACRO GEODATABASE_SDE_IN_PASSWORD_GEODATABASE_SDE_1 Winter16
 GUI PASSWORD GEODATABASE_SDE_IN_PASSWORD_GEODATABASE_SDE_1 Password:
 GEODATABASE_SDE_1_PASSWORD "$(GEODATABASE_SDE_IN_PASSWORD_GEODATABASE_SDE_1)"
 # =============================================================================
@@ -1533,6 +1497,7 @@ LOG_APPEND NO
 LOG_MAX_FEATURES 200
 LOG_MAX_RECORDED_FEATURES 200
 FME_REPROJECTION_ENGINE FME
+FME_IMPLICIT_CSMAP_REPROJECTION_MODE Datum
 FME_GEOMETRY_HANDLING Enhanced
 FME_STROKE_MAX_DEVIATION 0
 LOG_FILTER_MASK -1
@@ -1549,11 +1514,12 @@ MULTI_READER_CONTINUE_ON_READER_FAILURE No
 # -------------------------------------------------------------------------
 
 MACRO WORKSPACE_NAME ResultsPolyRoads2Line_FME2012
-MACRO FME_VIEWER_APP fmeview
+MACRO FME_VIEWER_APP fmedatainspector
 # -------------------------------------------------------------------------
 
-INCLUDE [ if {[info exists env(TEMP)]}  {set gVisualizerTemp $env(TEMP)}  elseif { $tcl_platform(platform) == "unix" } {set gVisualizerTemp "/tmp"} else {set gVisualizerTemp c:};  regsub -all {[ ,&]} {$(WORKSPACE_NAME)} {_} wsname; set gVisualizerTemp $gVisualizerTemp/${wsname}_[clock format [clock seconds] -format %H%M%S];  puts "MACRO WORKSPACE_TEMP_DIR $gVisualizerTemp"; 
+INCLUDE [ if {[info exists env(FME_TEMP)] && [file isdirectory $env(FME_TEMP)] && [file isdirectory $env(TEMP)]} {set gVisualizerTemp $env(FME_TEMP)}  elseif {[info exists env(TEMP)]}  {set gVisualizerTemp $env(TEMP)}  elseif { $tcl_platform(platform) == "unix" } {set gVisualizerTemp "/tmp"} else {set gVisualizerTemp c:};  regsub -all {[ ,&]} {$(WORKSPACE_NAME)} {_} wsname; set gVisualizerTemp $gVisualizerTemp/${wsname}_[clock format [clock seconds] -format %H%M%S];  puts "MACRO WORKSPACE_TEMP_DIR $gVisualizerTemp"; 
 MACRO VISUALIZER_FEATURE_FILE $(WORKSPACE_TEMP_DIR)/inspector.ffs
+MACRO VISUALIZER_SCHEMA_FILE $(WORKSPACE_TEMP_DIR)/inspector.fsc
 MACRO VISUALIZER_CREATE_SPATIAL_INDEX YES
 # -------------------------------------------------------------------------
 GEODATABASE_SDE_1_DEF WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW   geodb_type                   geodb_polygon   geodb_oid                    integer   FOREST_COVER_ID              integer   STOCKING_STANDARD_UNIT_ID    integer   OPENING_ID                   integer   STANDARDS_UNIT_ID            char(4)   SILV_POLYGON_NUMBER          char(30)   SILV_POLYGON_AREA            double   SILV_POLYGON_NET_AREA        double   SILV_NON_MAPPED_AREA         double   STOCKING_STATUS_CODE         char(3)   STOCKING_TYPE_CODE           char(3)   STOCKING_CLASS_CODE          char(1)   SILV_RESERVE_CODE            char(1)   SILV_RESERVE_OBJECTIVE_CODE  char(3)   TREE_COVER_PATTERN_CODE      char(1)   REENTRY_YEAR                 smallint   REFERENCE_YEAR               smallint   SITE_INDEX                   integer   SITE_INDEX_SOURCE_CODE       char(1)   BGC_ZONE_CODE                char(4)   BGC_SUBZONE_CODE             char(3)   BGC_VARIANT                  char(1)   BGC_PHASE                    char(1)   BEC_SITE_SERIES              char(4)   BEC_SITE_TYPE                char(3)   BEC_SERAL                    char(4)   FOREST_COVER_INV_TYPE        char(7)   I_FOREST_COVER_LAYER_ID      integer   I_TOTAL_STEMS_PER_HA         integer   I_TOTAL_WELL_SPACED_STEMS_HA integer   I_WELL_SPACED_STEMS_PER_HA   integer   I_FREE_GROWING_STEMS_PER_HA  integer   I_CROWN_CLOSURE_PERCENT      smallint   I_BASAL_AREA                 integer   I_SPECIES_CODE_1             char(8)   I_SPECIES_PERCENT_1          smallint   I_SPECIES_AGE_1              integer   I_SPECIES_HEIGHT_1           float   I_SPECIES_CODE_2             char(8)   I_SPECIES_PERCENT_2          smallint   I_SPECIES_AGE_2              integer   I_SPECIES_HEIGHT_2           float   I_SPECIES_CODE_3             char(8)   I_SPECIES_PERCENT_3          smallint   I_SPECIES_CODE_4             char(8)   I_SPECIES_PERCENT_4          smallint   I_SPECIES_CODE_5             char(8)   I_SPECIES_PERCENT_5          smallint   I_MORE_SPECIES_EXIST_IND     char(1)   I_INV_LABEL                  char(160)   I1_FOREST_COVER_LAYER_ID     integer   I1_TOTAL_STEMS_PER_HA        integer   I1_TOTAL_WELL_SPACED_STEMS_HA integer   I1_WELL_SPACED_STEMS_PER_HA  integer   I1_FREE_GROWING_STEMS_PER_HA integer   I1_CROWN_CLOSURE_PERCENT     smallint   I1_BASAL_AREA                integer   I1_SPECIES_CODE_1            char(8)   I1_SPECIES_PERCENT_1         smallint   I1_SPECIES_AGE_1             integer   I1_SPECIES_HEIGHT_1          float   I1_SPECIES_CODE_2            char(8)   I1_SPECIES_PERCENT_2         smallint   I1_SPECIES_AGE_2             integer   I1_SPECIES_HEIGHT_2          float   I1_SPECIES_CODE_3            char(8)   I1_SPECIES_PERCENT_3         smallint   I1_SPECIES_CODE_4            char(8)   I1_SPECIES_PERCENT_4         smallint   I1_SPECIES_CODE_5            char(8)   I1_SPECIES_PERCENT_5         smallint   I1_MORE_SPECIES_EXIST_IND    char(1)   I1_INV_LABEL                 char(160)   I2_FOREST_COVER_LAYER_ID     integer   I2_TOTAL_STEMS_PER_HA        integer   I2_TOTAL_WELL_SPACED_STEMS_HA integer   I2_WELL_SPACED_STEMS_PER_HA  integer   I2_FREE_GROWING_STEMS_PER_HA integer   I2_CROWN_CLOSURE_PERCENT     smallint   I2_BASAL_AREA                integer   I2_SPECIES_CODE_1            char(8)   I2_SPECIES_PERCENT_1         smallint   I2_SPECIES_AGE_1             integer   I2_SPECIES_HEIGHT_1          float   I2_SPECIES_CODE_2            char(8)   I2_SPECIES_PERCENT_2         smallint   I2_SPECIES_AGE_2             integer   I2_SPECIES_HEIGHT_2          float   I2_SPECIES_CODE_3            char(8)   I2_SPECIES_PERCENT_3         smallint   I2_SPECIES_CODE_4            char(8)   I2_SPECIES_PERCENT_4         smallint   I2_SPECIES_CODE_5            char(8)   I2_SPECIES_PERCENT_5         smallint   I2_MORE_SPECIES_EXIST_IND    char(1)   I2_INV_LABEL                 char(160)   I3_FOREST_COVER_LAYER_ID     integer   I3_TOTAL_STEMS_PER_HA        integer   I3_TOTAL_WELL_SPACED_STEMS_HA integer   I3_WELL_SPACED_STEMS_PER_HA  integer   I3_FREE_GROWING_STEMS_PER_HA integer   I3_CROWN_CLOSURE_PERCENT     smallint   I3_BASAL_AREA                integer   I3_SPECIES_CODE_1            char(8)   I3_SPECIES_PERCENT_1         smallint   I3_SPECIES_AGE_1             integer   I3_SPECIES_HEIGHT_1          float   I3_SPECIES_CODE_2            char(8)   I3_SPECIES_PERCENT_2         smallint   I3_SPECIES_AGE_2             integer   I3_SPECIES_HEIGHT_2          float   I3_SPECIES_CODE_3            char(8)   I3_SPECIES_PERCENT_3         smallint   I3_SPECIES_CODE_4            char(8)   I3_SPECIES_PERCENT_4         smallint   I3_SPECIES_CODE_5            char(8)   I3_SPECIES_PERCENT_5         smallint   I3_MORE_SPECIES_EXIST_IND    char(1)   I3_INV_LABEL                 char(160)   I4_FOREST_COVER_LAYER_ID     integer   I4_TOTAL_STEMS_PER_HA        integer   I4_TOTAL_WELL_SPACED_STEMS_HA integer   I4_WELL_SPACED_STEMS_PER_HA  integer   I4_FREE_GROWING_STEMS_PER_HA integer   I4_CROWN_CLOSURE_PERCENT     smallint   I4_BASAL_AREA                integer   I4_SPECIES_CODE_1            char(8)   I4_SPECIES_PERCENT_1         smallint   I4_SPECIES_AGE_1             integer   I4_SPECIES_HEIGHT_1          float   I4_SPECIES_CODE_2            char(8)   I4_SPECIES_PERCENT_2         smallint   I4_SPECIES_AGE_2             integer   I4_SPECIES_HEIGHT_2          float   I4_SPECIES_CODE_3            char(8)   I4_SPECIES_PERCENT_3         smallint   I4_SPECIES_CODE_4            char(8)   I4_SPECIES_PERCENT_4         smallint   I4_SPECIES_CODE_5            char(8)   I4_SPECIES_PERCENT_5         smallint   I4_MORE_SPECIES_EXIST_IND    char(1)   I4_INV_LABEL                 char(160)   GEOMETRY_EXIST_IND           char(1)   FEATURE_AREA                 double   FEATURE_PERIMETER            double   CAPTURE_METHOD_CODE          char(30)   DATA_SOURCE_CODE             char(10)   OBSERVATION_DATE             date   DATA_QUALITY_COMMENT         char(255)   FOREST_COVER_WHO_CREATED     char(30)   FOREST_COVER_WHEN_CREATED    date   FOREST_COVER_WHO_UPDATED     char(30)   FOREST_COVER_WHEN_UPDATED    date   FEATURE_CLASS_SKEY           integer   OBJECTID                     integer   GEOMETRY.AREA                double   GEOMETRY.LEN                 double
@@ -1574,7 +1540,7 @@ FACTORY_DEF * TeeFactory    FACTORY_NAME CenterLineReplacer    INPUT  FEATURE_TY
 
 # -------------------------------------------------------------------------
 
-FACTORY_DEF * TeeFactory    FACTORY_NAME "CenterLineReplacer_CENTERLINE -> ResultsRoads Correlator"    INPUT FEATURE_TYPE CenterLineReplacer_CENTERLINE    OUTPUT FEATURE_TYPE __GO_TO_FINAL_OUTPUT_ROUTER__       @Transform(FME_GENERIC,FILEGDB)       @SupplyAttributes(__wb_out_feat_type__,ResultsRoads)
+FACTORY_DEF * TeeFactory    FACTORY_NAME "CenterLineReplacer_CENTERLINE -> ResultsRoads Correlator"    INPUT FEATURE_TYPE CenterLineReplacer_CENTERLINE    OUTPUT FEATURE_TYPE __GO_TO_FINAL_OUTPUT_ROUTER__       multi_writer_id 0       @Transform(FME_GENERIC,FILEGDB)       @SupplyAttributes(__wb_out_feat_type__,ResultsRoads)
 # -------------------------------------------------------------------------
 
 FACTORY_DEF * TestFactory   FACTORY_NAME "Final Output Feature Type Router"   INPUT FEATURE_TYPE *   TEST @Value(__wb_out_feat_type__) != ""   OUTPUT PASSED FEATURE_TYPE *     @FeatureType(@Value(__wb_out_feat_type__))   OUTPUT FAILED FEATURE_TYPE __nuke_me__ @Tcl2("FME_StatMessage 818059 {@Value(fme_template_feature_type)} 818060 818061 fme_warn")
@@ -1583,4 +1549,4 @@ FACTORY_DEF * TestFactory   FACTORY_NAME "Final Output Feature Type Router"   IN
 FACTORY_DEF * TeeFactory   FACTORY_NAME "Final Output Nuker"   INPUT FEATURE_TYPE __nuke_me__
 
 # -------------------------------------------------------------------------
-FILEGDB_1_DEF ResultsRoads   filegdb_type                 geodb_polyline   filegdb_truncate_table       NO   filegdb_object_id_alias      OBJECTID   filegdb_shape_field          SHAPE   filegdb_config_keyword       DEFAULTS   filegdb_object_id_field      OBJECTID   filegdb_xy_tolerance         ""   filegdb_drop_table           NO   filegdb_shape_alias          SHAPE   filegdb_z_tolerance          0.001   I4_MORE_SPECIES_EXIST_IND    text(20)   I1_MORE_SPECIES_EXIST_IND    text(20)   FOREST_COVER_ID              text(20)   I2_SPECIES_PERCENT_1         text(20)   I_SPECIES_HEIGHT_2           text(20)   I_SPECIES_CODE_3             text(20)   I_SPECIES_HEIGHT_1           text(20)   SILV_RESERVE_OBJECTIVE_CODE  text(20)   I_CROWN_CLOSURE_PERCENT      text(20)   I_SPECIES_AGE_1              text(20)   I2_BASAL_AREA                text(20)   I_SPECIES_AGE_2              text(20)   I3_SPECIES_AGE_1             text(20)   OBSERVATION_DATE             text(20)   geodb_oid                    text(20)   REFERENCE_YEAR               text(20)   I2_SPECIES_CODE_4            text(20)   I_SPECIES_CODE_4             text(20)   I2_SPECIES_CODE_5            text(20)   I2_SPECIES_HEIGHT_2          text(20)   SITE_INDEX_SOURCE_CODE       text(20)   I2_SPECIES_HEIGHT_1          text(20)   I2_SPECIES_CODE_1            text(20)   I3_SPECIES_PERCENT_3         text(20)   I2_SPECIES_CODE_2            text(20)   I2_SPECIES_CODE_3            text(20)   I_INV_LABEL                  text(20)   GEOMETRY_EXIST_IND           text(20)   FOREST_COVER_WHO_UPDATED     text(20)   I1_SPECIES_PERCENT_5         text(20)   I3_SPECIES_PERCENT_4         text(20)   FOREST_COVER_INV_TYPE        text(20)   I1_INV_LABEL                 text(20)   GEOMETRY_LEN                 text(20)   I_FOREST_COVER_LAYER_ID      text(20)   SITE_INDEX                   text(20)   I_SPECIES_CODE_1             text(20)   CAPTURE_METHOD_CODE          text(20)   I_TOTAL_WELL_SPACED_STEMS_HA text(20)   I_FREE_GROWING_STEMS_PER_HA  text(20)   I3_WELL_SPACED_STEMS_PER_HA  text(20)   I1_SPECIES_CODE_4            text(20)   I1_FREE_GROWING_STEMS_PER_HA text(20)   I1_SPECIES_CODE_5            text(20)   BEC_SITE_TYPE                text(20)   I1_SPECIES_CODE_1            text(20)   I4_SPECIES_PERCENT_3         text(20)   I1_SPECIES_PERCENT_2         text(20)   I1_SPECIES_CODE_2            text(20)   I1_SPECIES_CODE_3            text(20)   I3_SPECIES_PERCENT_1         text(20)   SILV_NON_MAPPED_AREA         text(20)   I_TOTAL_STEMS_PER_HA         text(20)   I3_SPECIES_AGE_2             text(20)   I2_SPECIES_PERCENT_5         text(20)   I2_MORE_SPECIES_EXIST_IND    text(20)   I4_SPECIES_PERCENT_4         text(20)   FEATURE_CLASS_SKEY           text(20)   I2_SPECIES_AGE_1             text(20)   I1_BASAL_AREA                text(20)   I4_SPECIES_AGE_2             text(20)   I3_TOTAL_WELL_SPACED_STEMS_HA text(20)   I1_SPECIES_HEIGHT_2          text(20)   SILV_POLYGON_NUMBER          text(20)   I1_SPECIES_HEIGHT_1          text(20)   I2_INV_LABEL                 text(20)   FEATURE_AREA                 text(20)   I2_SPECIES_PERCENT_2         text(20)   I4_CROWN_CLOSURE_PERCENT     text(20)   I4_SPECIES_PERCENT_1         text(20)   BGC_ZONE_CODE                text(20)   I1_SPECIES_AGE_1             text(20)   I1_CROWN_CLOSURE_PERCENT     text(20)   I4_BASAL_AREA                text(20)   I2_CROWN_CLOSURE_PERCENT     text(20)   I3_CROWN_CLOSURE_PERCENT     text(20)   BGC_SUBZONE_CODE             text(20)   I1_TOTAL_STEMS_PER_HA        text(20)   I_SPECIES_CODE_5             text(20)   I4_TOTAL_WELL_SPACED_STEMS_HA text(20)   SILV_POLYGON_NET_AREA        text(20)   I3_TOTAL_STEMS_PER_HA        text(20)   I4_SPECIES_HEIGHT_2          text(20)   I2_TOTAL_STEMS_PER_HA        text(20)   I4_SPECIES_HEIGHT_1          text(20)   I4_TOTAL_STEMS_PER_HA        text(20)   I2_FREE_GROWING_STEMS_PER_HA text(20)   STOCKING_STATUS_CODE         text(20)   I1_WELL_SPACED_STEMS_PER_HA  text(20)   I1_TOTAL_WELL_SPACED_STEMS_HA text(20)   I4_FREE_GROWING_STEMS_PER_HA text(20)   I2_SPECIES_AGE_2             text(20)   I3_SPECIES_PERCENT_5         text(20)   I4_SPECIES_AGE_1             text(20)   STOCKING_CLASS_CODE          text(20)   I_SPECIES_CODE_2             text(20)   I_WELL_SPACED_STEMS_PER_HA   text(20)   REENTRY_YEAR                 text(20)   OPENING_ID                   text(20)   I3_MORE_SPECIES_EXIST_IND    text(20)   BEC_SITE_SERIES              text(20)   I_MORE_SPECIES_EXIST_IND     text(20)   I4_SPECIES_CODE_4            text(20)   I3_INV_LABEL                 text(20)   I4_SPECIES_CODE_5            text(20)   STOCKING_STANDARD_UNIT_ID    text(20)   I1_SPECIES_PERCENT_3         text(20)   I4_SPECIES_CODE_1            text(20)   I4_SPECIES_CODE_2            text(20)   FOREST_COVER_WHEN_UPDATED    text(20)   I3_SPECIES_PERCENT_2         text(20)   I4_SPECIES_CODE_3            text(20)   SILV_RESERVE_CODE            text(20)   BGC_PHASE                    text(20)   BGC_VARIANT                  text(20)   I2_TOTAL_WELL_SPACED_STEMS_HA text(20)   I4_SPECIES_PERCENT_5         text(20)   I1_SPECIES_PERCENT_4         text(20)   BEC_SERAL                    text(20)   I3_BASAL_AREA                text(20)   STOCKING_TYPE_CODE           text(20)   I_BASAL_AREA                 text(20)   I3_SPECIES_CODE_4            text(20)   STANDARDS_UNIT_ID            text(20)   SILV_POLYGON_AREA            text(20)   I3_SPECIES_CODE_5            text(20)   I3_SPECIES_HEIGHT_2          text(20)   I2_FOREST_COVER_LAYER_ID     text(20)   I2_SPECIES_PERCENT_3         text(20)   I3_FOREST_COVER_LAYER_ID     text(20)   I3_SPECIES_CODE_1            text(20)   I3_SPECIES_HEIGHT_1          text(20)   I3_SPECIES_CODE_2            text(20)   DATA_SOURCE_CODE             text(20)   I3_SPECIES_CODE_3            text(20)   I4_SPECIES_PERCENT_2         text(20)   I1_SPECIES_PERCENT_1         text(20)   FOREST_COVER_WHO_CREATED     text(20)   I1_FOREST_COVER_LAYER_ID     text(20)   OBJECTID                     text(20)   I4_FOREST_COVER_LAYER_ID     text(20)   FOREST_COVER_WHEN_CREATED    text(20)   I1_SPECIES_AGE_2             text(20)   I2_SPECIES_PERCENT_4         text(20)   I2_WELL_SPACED_STEMS_PER_HA  text(20)   I3_FREE_GROWING_STEMS_PER_HA text(20)   I4_WELL_SPACED_STEMS_PER_HA  text(20)   GEOMETRY_AREA                text(20)   I_SPECIES_PERCENT_5          text(20)   FEATURE_PERIMETER            text(20)   I_SPECIES_PERCENT_4          text(20)   I_SPECIES_PERCENT_1          text(20)   DATA_QUALITY_COMMENT         text(20)   I_SPECIES_PERCENT_3          text(20)   I_SPECIES_PERCENT_2          text(20)   TREE_COVER_PATTERN_CODE      text(20)   I4_INV_LABEL                 text(20)
+FILEGDB_1_DEF ResultsRoads   filegdb_type                 geodb_polyline   filegdb_xy_tolerance         ""   filegdb_z_tolerance          0.001   filegdb_object_id_field      OBJECTID   filegdb_shape_alias          SHAPE   filegdb_truncate_table       NO   filegdb_object_id_alias      OBJECTID   filegdb_config_keyword       DEFAULTS   filegdb_drop_table           NO   filegdb_shape_field          SHAPE   I4_MORE_SPECIES_EXIST_IND    text(20)   I1_MORE_SPECIES_EXIST_IND    text(20)   FOREST_COVER_ID              text(20)   I2_SPECIES_PERCENT_1         text(20)   I_SPECIES_HEIGHT_2           text(20)   I_SPECIES_CODE_3             text(20)   I_SPECIES_HEIGHT_1           text(20)   SILV_RESERVE_OBJECTIVE_CODE  text(20)   I_CROWN_CLOSURE_PERCENT      text(20)   I_SPECIES_AGE_1              text(20)   I2_BASAL_AREA                text(20)   I_SPECIES_AGE_2              text(20)   I3_SPECIES_AGE_1             text(20)   OBSERVATION_DATE             text(20)   geodb_oid                    text(20)   REFERENCE_YEAR               text(20)   I2_SPECIES_CODE_4            text(20)   I_SPECIES_CODE_4             text(20)   I2_SPECIES_CODE_5            text(20)   I2_SPECIES_HEIGHT_2          text(20)   SITE_INDEX_SOURCE_CODE       text(20)   I2_SPECIES_HEIGHT_1          text(20)   I2_SPECIES_CODE_1            text(20)   I3_SPECIES_PERCENT_3         text(20)   I2_SPECIES_CODE_2            text(20)   I2_SPECIES_CODE_3            text(20)   I_INV_LABEL                  text(20)   GEOMETRY_EXIST_IND           text(20)   FOREST_COVER_WHO_UPDATED     text(20)   I1_SPECIES_PERCENT_5         text(20)   I3_SPECIES_PERCENT_4         text(20)   FOREST_COVER_INV_TYPE        text(20)   I1_INV_LABEL                 text(20)   GEOMETRY_LEN                 text(20)   I_FOREST_COVER_LAYER_ID      text(20)   SITE_INDEX                   text(20)   I_SPECIES_CODE_1             text(20)   CAPTURE_METHOD_CODE          text(20)   I_TOTAL_WELL_SPACED_STEMS_HA text(20)   I_FREE_GROWING_STEMS_PER_HA  text(20)   I3_WELL_SPACED_STEMS_PER_HA  text(20)   I1_SPECIES_CODE_4            text(20)   I1_FREE_GROWING_STEMS_PER_HA text(20)   I1_SPECIES_CODE_5            text(20)   BEC_SITE_TYPE                text(20)   I1_SPECIES_CODE_1            text(20)   I4_SPECIES_PERCENT_3         text(20)   I1_SPECIES_PERCENT_2         text(20)   I1_SPECIES_CODE_2            text(20)   I1_SPECIES_CODE_3            text(20)   I3_SPECIES_PERCENT_1         text(20)   SILV_NON_MAPPED_AREA         text(20)   I_TOTAL_STEMS_PER_HA         text(20)   I3_SPECIES_AGE_2             text(20)   I2_SPECIES_PERCENT_5         text(20)   I2_MORE_SPECIES_EXIST_IND    text(20)   I4_SPECIES_PERCENT_4         text(20)   FEATURE_CLASS_SKEY           text(20)   I2_SPECIES_AGE_1             text(20)   I1_BASAL_AREA                text(20)   I4_SPECIES_AGE_2             text(20)   I3_TOTAL_WELL_SPACED_STEMS_HA text(20)   I1_SPECIES_HEIGHT_2          text(20)   SILV_POLYGON_NUMBER          text(20)   I1_SPECIES_HEIGHT_1          text(20)   I2_INV_LABEL                 text(20)   FEATURE_AREA                 text(20)   I2_SPECIES_PERCENT_2         text(20)   I4_CROWN_CLOSURE_PERCENT     text(20)   I4_SPECIES_PERCENT_1         text(20)   BGC_ZONE_CODE                text(20)   I1_SPECIES_AGE_1             text(20)   I1_CROWN_CLOSURE_PERCENT     text(20)   I4_BASAL_AREA                text(20)   I2_CROWN_CLOSURE_PERCENT     text(20)   I3_CROWN_CLOSURE_PERCENT     text(20)   BGC_SUBZONE_CODE             text(20)   I1_TOTAL_STEMS_PER_HA        text(20)   I_SPECIES_CODE_5             text(20)   I4_TOTAL_WELL_SPACED_STEMS_HA text(20)   SILV_POLYGON_NET_AREA        text(20)   I3_TOTAL_STEMS_PER_HA        text(20)   I4_SPECIES_HEIGHT_2          text(20)   I2_TOTAL_STEMS_PER_HA        text(20)   I4_SPECIES_HEIGHT_1          text(20)   I4_TOTAL_STEMS_PER_HA        text(20)   I2_FREE_GROWING_STEMS_PER_HA text(20)   STOCKING_STATUS_CODE         text(20)   I1_WELL_SPACED_STEMS_PER_HA  text(20)   I1_TOTAL_WELL_SPACED_STEMS_HA text(20)   I4_FREE_GROWING_STEMS_PER_HA text(20)   I2_SPECIES_AGE_2             text(20)   I3_SPECIES_PERCENT_5         text(20)   I4_SPECIES_AGE_1             text(20)   STOCKING_CLASS_CODE          text(20)   I_SPECIES_CODE_2             text(20)   I_WELL_SPACED_STEMS_PER_HA   text(20)   REENTRY_YEAR                 text(20)   OPENING_ID                   text(20)   I3_MORE_SPECIES_EXIST_IND    text(20)   BEC_SITE_SERIES              text(20)   I_MORE_SPECIES_EXIST_IND     text(20)   I4_SPECIES_CODE_4            text(20)   I3_INV_LABEL                 text(20)   I4_SPECIES_CODE_5            text(20)   STOCKING_STANDARD_UNIT_ID    text(20)   I1_SPECIES_PERCENT_3         text(20)   I4_SPECIES_CODE_1            text(20)   I4_SPECIES_CODE_2            text(20)   FOREST_COVER_WHEN_UPDATED    text(20)   I3_SPECIES_PERCENT_2         text(20)   I4_SPECIES_CODE_3            text(20)   SILV_RESERVE_CODE            text(20)   BGC_PHASE                    text(20)   BGC_VARIANT                  text(20)   I2_TOTAL_WELL_SPACED_STEMS_HA text(20)   I4_SPECIES_PERCENT_5         text(20)   I1_SPECIES_PERCENT_4         text(20)   BEC_SERAL                    text(20)   I3_BASAL_AREA                text(20)   STOCKING_TYPE_CODE           text(20)   I_BASAL_AREA                 text(20)   I3_SPECIES_CODE_4            text(20)   STANDARDS_UNIT_ID            text(20)   SILV_POLYGON_AREA            text(20)   I3_SPECIES_CODE_5            text(20)   I3_SPECIES_HEIGHT_2          text(20)   I2_FOREST_COVER_LAYER_ID     text(20)   I2_SPECIES_PERCENT_3         text(20)   I3_FOREST_COVER_LAYER_ID     text(20)   I3_SPECIES_CODE_1            text(20)   I3_SPECIES_HEIGHT_1          text(20)   I3_SPECIES_CODE_2            text(20)   DATA_SOURCE_CODE             text(20)   I3_SPECIES_CODE_3            text(20)   I4_SPECIES_PERCENT_2         text(20)   I1_SPECIES_PERCENT_1         text(20)   FOREST_COVER_WHO_CREATED     text(20)   I1_FOREST_COVER_LAYER_ID     text(20)   OBJECTID                     text(20)   I4_FOREST_COVER_LAYER_ID     text(20)   FOREST_COVER_WHEN_CREATED    text(20)   I1_SPECIES_AGE_2             text(20)   I2_SPECIES_PERCENT_4         text(20)   I2_WELL_SPACED_STEMS_PER_HA  text(20)   I3_FREE_GROWING_STEMS_PER_HA text(20)   I4_WELL_SPACED_STEMS_PER_HA  text(20)   GEOMETRY_AREA                text(20)   I_SPECIES_PERCENT_5          text(20)   FEATURE_PERIMETER            text(20)   I_SPECIES_PERCENT_4          text(20)   I_SPECIES_PERCENT_1          text(20)   DATA_QUALITY_COMMENT         text(20)   I_SPECIES_PERCENT_3          text(20)   I_SPECIES_PERCENT_2          text(20)   TREE_COVER_PATTERN_CODE      text(20)   I4_INV_LABEL                 text(20)

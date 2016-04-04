@@ -1,8 +1,11 @@
 import os
 import tempfile
 import yaml
-import getpass
 from datetime import date
+import time
+import getpass
+from multiprocessing import Pool
+from functools import partial
 
 import click
 import arcpy
@@ -41,10 +44,6 @@ def initialize_output(param):
                                             BC_ALBERS_SR)
         # add all columns noted in source .csv
         for road in param["layers"]:
-            # if the primary key is remapped to a new name in the source .csv,
-            # handle that here
-            if road["new_primary_key"]:
-                road["primary_key"] = road["new_primary_key"]
             fields = arcutil.clean_fieldlist(road["primary_key"])+arcutil.clean_fieldlist(road["fields"])
             for field in arcpy.ListFields(os.path.join(srcWksp, road["alias"])):
                 if field.name in fields:
@@ -87,17 +86,12 @@ def setup(layers=None, tiles=None):
         param[gdb+"_wksp"] = arcutil.create_wksp(param["TMP"], gdb+".gdb")
     # point to tile processing folder
     param["tiledir"] = os.path.join(param["TMP"], "tiles")
-    print param["TMP"]
-    # get BCGW credentials
+    # create BCGW connection if not present
     if "BCGW_USR" not in param.keys():
         param["BCGW_USR"] = getpass.getuser()
-    param["BCGW_PWD"] = getpass.getpass("Enter BCGW password:")
-
-    # create BCGW connection if not present
-    param["BCGW"] = arcutil.create_bcgw_connection(param["BCGW_USR"],
-                                                   param["BCGW_PWD"])
-    # get tile grid and point to it
-    if not arcpy.Exists(param["grid"]):
+    param["BCGW"] = arcutil.create_bcgw_connection(param["BCGW_USR"])
+    # get grid tile layer
+    if not arcpy.Exists(os.path.join(param["src_wksp"], "grid")):
         arcutil.copy_data(os.path.join(param['BCGW'], param["grid"]),
                           os.path.join(param["src_wksp"], "grid"),
                           fieldList=param["tile_column"])
@@ -123,8 +117,10 @@ def setup(layers=None, tiles=None):
         for placeholder in pathvars:
             layer.update({"source": layer["source"].replace("$"+placeholder,
                                                             param[placeholder])})
-    # make sure fieldlist is clean
-    layer["fields"] = arcutil.clean_fieldlist(layer["fields"])
+        # make sure fieldlists are clean
+        for column in ["fields", "primary_key"]:
+            layer.update({column: arcutil.clean_fieldlist(layer[column])})
+
     return param
 
 
@@ -137,143 +133,181 @@ def get_source_data(param):
     """
     wksp = param["src_wksp"]
     click.echo("Extracting, tiling and indexing source data")
-    for roads in param["layers"]:
-        if not arcpy.Exists(os.path.join(wksp, roads["alias"])):
-            click.echo(" - "+os.path.split(roads["source"])[1])
+    for layer in param["layers"]:
+        if not arcpy.Exists(os.path.join(wksp, layer["alias"])):
+            click.echo(" - "+os.path.split(layer["source"])[1])
             # define fields to pull
+            fields = layer["fields"]
             if not layer["create_key"]:
-                fields = layer["primary_key"]+layer["fields"]
-            else:
-                fields = layer["fields"]
+                fields = layer["primary_key"]+fields
+            if layer["tile_column"]:
+                fields = fields + [layer["tile_column"]]
             fieldlist = ",".join(fields)
-            if not roads["tile_column"]:
-                arcutil.copy_data(roads["source"],
-                                  os.path.join("in_memory", roads["alias"]),
-                                  roads["query"],
-                                  fieldlist=fieldlist)
+            """
+            # lets not bother pre-cutting the data
+            if not layer["tile_column"]:
+                arcutil.copy_data(layer["source"],
+                                  os.path.join("in_memory", layer["alias"]),
+                                  layer["query"],
+                                  fieldList=fieldlist)
                 arcpy.Intersect_analysis([os.path.join("in_memory",
-                                                       roads["alias"]),
+                                                       layer["alias"]),
                                           os.path.join(wksp, "grid")],
-                                         os.path.join(wksp, roads["alias"]))
-                arcpy.AddIndex_management(os.path.join(wksp, roads["alias"]),
+                                         os.path.join(wksp, layer["alias"]),
+                                         "NO_FID")
+                arcpy.AddIndex_management(os.path.join(wksp, layer["alias"]),
                                           param["tile_column"],
-                                          roads["alias"]+'map_tile_idx')
-            # simply copy pre-tiled data, making sure tile column is standard
-            if roads["tile_column"]:
-                arcutil.copy_data(roads["source"],
-                                  os.path.join(wksp, roads["alias"]),
-                                  roads["query"],
-                                  fieldlist=fieldlist)
-                if roads["tile_column"] != param["tile_column"]:
-                    arcpy.AddField_management(os.path.join(wksp,
-                                                           roads["alias"]),
-                                              param["tile_column"],
-                                              "TEXT", "", "", "32")
-                    arcpy.AddIndex_management(os.path.join(wksp,
-                                                           roads["alias"]),
-                                              param["tile_column"],
-                                              roads["alias"]+'map_tile_idx')
+                                          layer["alias"]+'map_tile_idx')
+            """
+            # simply copy input layers
+            #if layer["tile_column"]:
+            arcutil.copy_data(layer["source"],
+                              os.path.join(wksp, layer["alias"]),
+                              layer["query"],
+                              fieldList=fieldlist)
+            # but make sure tile column is standard
+            if layer["tile_column"] and layer["tile_column"] != param["tile_column"]:
+                arcpy.AddField_management(os.path.join(wksp,
+                                                       layer["alias"]),
+                                          param["tile_column"],
+                                          "TEXT", "", "", "32")
+                arcutil.remap(os.path.join(wksp, layer["alias"]),
+                              {param["tile_column"] : "!"+layer["tile_column"]+"!"})
+                arcpy.AddIndex_management(os.path.join(wksp,
+                                                       layer["alias"]),
+                                          param["tile_column"],
+                                          layer["alias"]+'map_tile_idx')
             # add date and source
-            arcpy.AddField_management(os.path.join(wksp, roads["alias"]),
+            arcpy.AddField_management(os.path.join(wksp, layer["alias"]),
                                       "BCGW_SOURCE", "TEXT", "", "", "255")
-            arcpy.AddField_management(os.path.join(wksp, roads["alias"]),
+            arcpy.AddField_management(os.path.join(wksp, layer["alias"]),
                                       "BCGW_EXTRACTION_DATE",
                                       "TEXT", "", "", "255")
-            arcutil.remap(os.path.join(wksp, roads["alias"]),
+            arcutil.remap(os.path.join(wksp, layer["alias"]),
                           {"BCGW_EXTRACTION_DATE": date.today().isoformat()})
-            if roads["noted_source"]:
-                bcgw_source = os.path.split(roads["noted_source"])[1]
+            if layer["noted_source"]:
+                bcgw_source = os.path.split(layer["noted_source"])[1]
             else:
-                bcgw_source = os.path.split(roads["source"])[1]
-            arcutil.remap(os.path.join(wksp, roads["alias"]),
+                bcgw_source = os.path.split(layer["source"])[1]
+            arcutil.remap(os.path.join(wksp, layer["alias"]),
                           {"BCGW_SOURCE": bcgw_source})
-
             # add new primary key if so noted
             # the new key is just a copy of the objectid, added so that it
             # gets retained in subsequent operations
-            if roads["create_key"]:
-                arcutil.add_unique_id(os.path.join(wksp, roads["alias"]),
-                                      roads["new_primary_key"])
+            if layer["create_key"]:
+                arcutil.add_unique_id(os.path.join(wksp, layer["alias"]),
+                                      layer["primary_key"][0])
+            # repair geom
+            arcpy.RepairGeometry_management(os.path.join(wksp, layer["alias"]))
 
 
 def process(param, tile):
     """
-    From provided list of road data, shift lower priority roads within
-    specified tolerance of higher priority roads to match position of higher
-    priority roads.
+    For given tile:
+      - load road data from each noted source
+      - shift lower priority roads within specified tolerance of higher priority
+        roads to match position of higher priority roads
+      - remove duplicate roads from lower priority source
+      - merge all road sources into single layer
     """
-    # try and do all work in memory
-    arcpy.env.workspace = "in_memory"
+    outfc = os.path.join(param["tiledir"], "temp_"+tile+".gdb", "roads_"+tile)
+    if not arcpy.Exists(outfc):
+        start_time = time.time()
+        # create tile workspace
+        tile_wksp = arcutil.create_wksp(param["tiledir"], "temp_"+tile+".gdb")
+        # try and do all work in memory
+        arcpy.env.workspace = "in_memory"
+        # NOPE. 999999 error. try writing everything to disk instead
+        #arcpy.env.workspace = tile_wksp
+        # create a clip layer from grid
+        tile_layer = "tile_"+tile+"_lyr"
+        tile_query = param["tile_column"]+" LIKE '"+tile+"%'"
+        arcpy.MakeFeatureLayer_management(os.path.join(param["src_wksp"], "grid"),
+                                          tile_layer,
+                                          tile_query)
+        # get data for each source layer within given tile
+        for layer in param["layers"]:
+            src_layer = os.path.join(param["src_wksp"], layer["alias"])
+            mem_layer = layer["alias"]+"_"+tile
+            fieldlist = ",".join(layer["primary_key"]+
+                                 layer["fields"]+
+                                 ["BCGW_SOURCE", "BCGW_EXTRACTION_DATE"])
+            #arcutil.copy_data(os.path.join(param["src_wksp"], layer["alias"]),
+            #                  mem_layer,
+            #                  param["tile_column"]+" LIKE '"+tile+"%'",
+            #                  fieldList=fieldlist)
+            # if layer is pre-tiled, simply query it on the tile column
+            if param["tile_column"] in [f.name for f in arcpy.ListFields(src_layer)]:
+                arcutil.copy_data(src_layer, mem_layer, tile_query, fieldlist)
+            # otherwise do a spatial query and clip
+            else:
+                ftr_layer = layer["alias"]+"_"+tile+"_lyr"
+                fieldinfo = arcutil.pull_items(src_layer, fieldlist)
+                arcpy.MakeFeatureLayer_management(src_layer, ftr_layer,
+                                                  "", "", fieldinfo)
+                arcpy.SelectLayerByLocation_management(ftr_layer, "INTERSECT",
+                                                       tile_layer)
+                arcpy.Clip_analysis(ftr_layer, tile_layer, mem_layer)
+                # cleanup
+                arcpy.Delete_management(ftr_layer)
 
-    # get data for each source layer within given tile
-    for layer in param["layers"]:
-        mem_layer = layer["alias"]+"_"+tile
-        fieldlist = ",".join(layer["primary_key"],
-                             layer["fields"],
-                             ["BCGW_SOURCE", "BCGW_EXTRACTION_DATE"])
-        arcutil.copy_data(os.path.join(param["src_wksp"], layer["alias"]),
-                          mem_layer,
-                          param["tile_column"]+" LIKE '"+tile+"%'",
-                          fieldlist=fieldlist)
-        arcpy.RepairGeometry_management(mem_layer)
+            # repair geom, maybe that will fix the 999999 errors...
+            arcpy.RepairGeometry_management(mem_layer)
 
-    # use only layers that actually have data
-    layers = [l["alias"] ]
-    layers = [road for road in  if get_count(road["alias"]+"_"+job) > 0]
+        # use only layers that actually have data
+        roads = []
+        for layer in param["layers"]:
+            mem_layer = layer["alias"]+"_"+tile
+            #print (mem_layer, arcutil.n_records(mem_layer))
+            if arcutil.n_records(mem_layer) > 0:
+                roads = roads + [mem_layer]
 
-    # repair geometry for each layer
-    for roadlayer in roadSources:
-        roadlayer["alias"] = roadlayer["alias"]+"_"+job
-        arcpy.RepairGeometry_management(roadlayer["alias"])
+        # only run the integrate / erase etc if there is more than one road source
+        if len(roads) > 1:
+            # regenerate priority numbers, in case empty layers have been removed
+            integrate_str = ";".join([r+" "+str(i+1) for i,r in enumerate(roads)])
+            # perform integrate, modifing extracted road data in place,
+            # snapping roads within tolerance
+            arcpy.Integrate_management(integrate_str, param["tolerance"])
+            # start with the roads of top priority,
+            in_layer = roads[0]
+            # then loop through the rest of the roads
+            for i in range(1, len(roads)):
+                out_layer = "temp_"+tile+"_"+str(i)
+                # erase first layer or previous output with next roads layer
+                arcpy.Erase_analysis(roads[i],
+                                     in_layer,
+                                     "temp_missing_roads_"+tile,
+                                     "0.01 Meters")
+                # merge the output missing roads with the previous input
+                arcpy.Merge_management(["temp_missing_roads_"+tile, in_layer],
+                                       out_layer)
+                arcpy.Delete_management("temp_missing_roads_"+tile)
+                in_layer = out_layer
+            # write to output gdb
+            arcutil.copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
+            # delete temp layers
+            for i in range(1, len(roads)):
+                arcpy.Delete_management("temp_"+tile+"_"+str(i))
 
-    # extract just the aliases/feature class names
-    roads = [r["alias"] for r in roadSources]
+        elif len(roads) == 1:
+            # append single road source to output
+            arcutil.copy_data(roads[0], os.path.join(tile_wksp, "roads_"+tile))
+            #arcutil.copy_data(roads[0], "roads_"+tile)
 
-    # only run the integrate / erase etc if there is more than one road source for the
-    # given tile
-    if len(roads) > 1:
-        # regenerate priority numbers, in case empty layers have been removed
-        integrateData = ";".join([r+" "+str(i+1) for i,r in enumerate(roads)])
+        elif len(roads) == 0:
+            # if there aren't any roads, don't do anything
+            click.echo('No roads present in tile '+tile)
 
-        # modify extracted road data in place, snapping roads within 7m
-        arcpy.Integrate_management(integrateData, tolerance)
-
-        # start with the roads of top priority,
-        inlayer = roads[0]
-        # then loop through the rest of the roads
-        for i in range(1, len(roads)):
-            outlayer = "temp_"+job+"_"+str(i)
-
-            # erase first layer or previous output with next roads layer
-            print "erasing "+inlayer+" roads from "+roads[i]
-            arcpy.Erase_analysis(roads[i],
-                                 inlayer,
-                                 "temp_missing_roads_"+job,
-                                 "0.01 Meters")
-
-            # merge the output missing roads with the previous input
-            print "merging roads remaining from "+roads[i]+" with "+inlayer+" to create "+outlayer
-            arcpy.Merge_management(["temp_missing_roads_"+job,inlayer], outlayer)
-            arcpy.Delete_management("temp_missing_roads_"+job)
-            inlayer = outlayer
-
-        # create temp output workspace for given tile
-        temp_wksp = arcutil.create_wksp(param["tiledir"], "temp_"+tile+".gdb")
-
-        # append to output
-        arcpy.Append_management([outlayer], outFC, "NO_TEST")
-
-    elif len(roads) == 1:
-        # append single road source to output
-        arcpy.Append_management([roads[0]], outFC, "NO_TEST")
-
-    elif len(roads) == 0:
-        # if there aren't any roads, don't do anything
-        print 'No roads present in tile'
-
-    # cleanup
-    for road in read_datalist(roadlist):
-        arcpy.Delete_management(road["alias"]+"_"+job)
+        # cleanup
+        #for fc in arcpy.ListFeatureClasses():
+        #    arcpy.Delete_management(fc)
+        for layer in param["layers"]:
+            if arcpy.Exists(layer["alias"]+"_"+tile):
+                arcpy.Delete_management(layer["alias"]+"_"+tile)
+        arcpy.Delete_management(tile_layer)
+        elapsed_time = time.time() - start_time
+        click.echo("Completed "+tile+": "+str(elapsed_time))
 
 
 # define commands
@@ -294,13 +328,29 @@ def extract(layers):
 
 
 @cli.command()
-def integrate():
+@click.option("--tiles", "-t",
+              help='Comma separated list of 250k tiles to process')
+def integrate(tiles):
     """
-    Combine all road layers into single output
+    Run road integration
     """
-    param = setup()
-    process(param)
+    start_time = time.time()
+    param = setup(None, tiles)
 
+    # split processing between multiple processes
+    # n processes is equal to processess parmeter in config
+    func = partial(process, param)
+    pool = Pool(processes=param["processes"])
+    pool.map(func, param["tiles"])
+    pool.close()
+    pool.join()
+
+    # merge outputs to single output layer
+    outputs = [os.path.join(param["tiledir"], "temp_"+t+".gdb", "roads_"+t) for t in tiles]
+    arcpy.Merge_management(outputs, os.path.join(param["out_wksp"], param["output"])
+
+    elapsed_time = time.time() - start_time
+    click.echo("All tiles complete in : "+str(elapsed_time))
 
 if __name__ == '__main__':
     cli()

@@ -1,7 +1,8 @@
-fimport os
+import os
 import csv
 import tempfile
 import uuid
+import getpass
 
 import arcpy
 
@@ -22,6 +23,13 @@ PARAMETER['Latitude_Of_Origin',45.0],
 UNIT['Meter',1.0]];IsHighPrecision
 """
 
+def n_records(table):
+    """
+    Shortcut to arcpy.GetCount
+    Why specify getOutput(0) each time?
+    """
+    result = arcpy.GetCount_management(table)
+    return int(result.getOutput(0))
 
 def get_fields(layer):
     """
@@ -81,7 +89,7 @@ def pull_items(inData, fieldList=None):
         if fieldList:
             if inputfields[index] in fieldList:
                 fieldInfo.addField(inputfields[index],
-                                   inputfields[index].lower(), "VISIBLE", "")
+                                   inputfields[index], "VISIBLE", "")
             else:
                 fieldInfo.addField(inputfields[index],
                                    inputfields[index], "HIDDEN", "")
@@ -149,7 +157,7 @@ def copy_data(sourcePath, destPath, query=None, fieldList=None, aoi=None,
         #print('copy_data: ' + sourcePath + " copied to " + destPath)
 
 
-def create_bcgw_connection(usr, pwd):
+def create_bcgw_connection(usr=None, pwd=None):
     """
     Create a BCGW connection
     """
@@ -158,6 +166,11 @@ def create_bcgw_connection(usr, pwd):
     bcgw = os.path.join(tempPath, tempConnectionFile)
     # create connection only if it doesn't exist
     if not os.path.exists(bcgw):
+        # get BCGW credentials
+        if not usr:
+            usr = getpass.getuser()
+        if not pwd:
+            pwd = getpass.getpass("Enter BCGW password:")
         arcpy.CreateArcSDEConnectionFile_management(tempPath,
                                                 tempConnectionFile,
                                                 "slkux1.env.gov.bc.ca",
