@@ -63,8 +63,11 @@ Integrate command only, 250k tiles:
 
 6 cores: 21.75min
 8 cores: 16.9min
-10 cores:
+10 cores: 14.9min
 
+## Todo
+
+For more speed, extract could be multicore as well
 
 
 

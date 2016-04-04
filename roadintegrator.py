@@ -143,29 +143,12 @@ def get_source_data(param):
             if layer["tile_column"]:
                 fields = fields + [layer["tile_column"]]
             fieldlist = ",".join(fields)
-            """
-            # lets not bother pre-cutting the data
-            if not layer["tile_column"]:
-                arcutil.copy_data(layer["source"],
-                                  os.path.join("in_memory", layer["alias"]),
-                                  layer["query"],
-                                  fieldList=fieldlist)
-                arcpy.Intersect_analysis([os.path.join("in_memory",
-                                                       layer["alias"]),
-                                          os.path.join(wksp, "grid")],
-                                         os.path.join(wksp, layer["alias"]),
-                                         "NO_FID")
-                arcpy.AddIndex_management(os.path.join(wksp, layer["alias"]),
-                                          param["tile_column"],
-                                          layer["alias"]+'map_tile_idx')
-            """
-            # simply copy input layers
-            #if layer["tile_column"]:
+            # copy input layer
             arcutil.copy_data(layer["source"],
                               os.path.join(wksp, layer["alias"]),
                               layer["query"],
                               fieldList=fieldlist)
-            # but make sure tile column is standard
+            # make sure any existing tile column is standard
             if layer["tile_column"] and layer["tile_column"] != param["tile_column"]:
                 arcpy.AddField_management(os.path.join(wksp,
                                                        layer["alias"]),
@@ -217,8 +200,6 @@ def process(param, tile):
         tile_wksp = arcutil.create_wksp(param["tiledir"], "temp_"+tile+".gdb")
         # try and do all work in memory
         arcpy.env.workspace = "in_memory"
-        # NOPE. 999999 error. try writing everything to disk instead
-        #arcpy.env.workspace = tile_wksp
         # create a clip layer from grid
         tile_layer = "tile_"+tile+"_lyr"
         tile_query = param["tile_column"]+" LIKE '"+tile+"%'"
@@ -232,10 +213,6 @@ def process(param, tile):
             fieldlist = ",".join(layer["primary_key"]+
                                  layer["fields"]+
                                  ["BCGW_SOURCE", "BCGW_EXTRACTION_DATE"])
-            #arcutil.copy_data(os.path.join(param["src_wksp"], layer["alias"]),
-            #                  mem_layer,
-            #                  param["tile_column"]+" LIKE '"+tile+"%'",
-            #                  fieldList=fieldlist)
             # if layer is pre-tiled, simply query it on the tile column
             if param["tile_column"] in [f.name for f in arcpy.ListFields(src_layer)]:
                 arcutil.copy_data(src_layer, mem_layer, tile_query, fieldlist)
@@ -251,7 +228,7 @@ def process(param, tile):
                 # cleanup
                 arcpy.Delete_management(ftr_layer)
 
-            # repair geom, maybe that will fix the 999999 errors...
+            # repair geom slows things down but we want to be tidy
             arcpy.RepairGeometry_management(mem_layer)
 
         # use only layers that actually have data
@@ -347,14 +324,15 @@ def integrate(tiles):
 
     elapsed_time = time.time() - start_time
     click.echo("All tiles complete in : "+str(elapsed_time))
-
-    click.echo("Merging tiles to output")
+    click.echo("Merging tiles to output...")
     # merge outputs to single output layer
-    outputs = [os.path.join(param["tiledir"], "temp_"+t+".gdb", "roads_"+t) for t in param["tiles"]]
+    outputs = []
+    for t in param["tiles"]:
+        fc = os.path.join(param["tiledir"], "temp_"+t+".gdb", "roads_"+t)
+        if arcpy.Exists(fc):
+            outputs = outputs + [fc]
     arcpy.Merge_management(outputs, os.path.join(param["out_wksp"], param["output"]))
-
-    elapsed_time = time.time() - start_time
-    click.echo("All tiles complete in : "+str(elapsed_time))
+    click.echo("Output ready in : "+os.path.join(param["out_wksp"], param["output"]))
 
 if __name__ == '__main__':
     cli()
