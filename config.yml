@@ -2,8 +2,9 @@
 # input definitions
 # -----------------
 datalist: road_inputs.csv               # file containing list of source layers
-tilelist: tiles.csv                     # file containing list of tiles to process (250k tiles)
-grid: WHSE_BASEMAPPING.BCGS_20K_GRID    # BCGW tile layer to slice and dice
+tilelist: tiles.csv                     # file containing list of tiles to process
+grid: WHSE_BASEMAPPING.BCGS_20K_GRID    # BCGW tile layer with which to slice and dice
+                                        # (note that the 20k grid is fine for 250k queries)
 tile_column: MAP_TILE                   # tile field in tile layer
 
 # -----------------
@@ -26,7 +27,7 @@ output: integrated_roads
 # -----------------
 # misc config settings
 # -----------------
-processes: 8                             # how many cores to use
+processes: 10                            # how many cores to use
 tmpdir: roadintegrator                   # folder to create and write to on T
 
 # -----------------

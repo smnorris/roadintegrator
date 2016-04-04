@@ -329,7 +329,7 @@ def extract(layers):
 
 @cli.command()
 @click.option("--tiles", "-t",
-              help='Comma separated list of 250k tiles to process')
+              help='Comma separated list of tiles to process')
 def integrate(tiles):
     """
     Run road integration
@@ -345,9 +345,13 @@ def integrate(tiles):
     pool.close()
     pool.join()
 
+    elapsed_time = time.time() - start_time
+    click.echo("All tiles complete in : "+str(elapsed_time))
+
+    click.echo("Merging tiles to output")
     # merge outputs to single output layer
-    outputs = [os.path.join(param["tiledir"], "temp_"+t+".gdb", "roads_"+t) for t in tiles]
-    arcpy.Merge_management(outputs, os.path.join(param["out_wksp"], param["output"])
+    outputs = [os.path.join(param["tiledir"], "temp_"+t+".gdb", "roads_"+t) for t in param["tiles"]]
+    arcpy.Merge_management(outputs, os.path.join(param["out_wksp"], param["output"]))
 
     elapsed_time = time.time() - start_time
     click.echo("All tiles complete in : "+str(elapsed_time))
