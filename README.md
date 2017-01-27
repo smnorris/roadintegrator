@@ -49,7 +49,7 @@ Consider manually backing up the extract .gdb to a network drive in event of ser
 
 ## Methodology
 
-- in PostgreSQL/PostGIS, create road lines from RESULTS road polyons (see [results_roads_lines](results_roads_lines))
+- in PostgreSQL/PostGIS, create road lines from RESULTS road polyons (see [results_road_lines](results_road_lines))
 - consolidate all road sources noted in `road_inputs.csv` into a single gdb
 - for each tile noted in tiles.csv (all 250k tils):
     + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on input data priorities specified in `road_inputs.csv`
