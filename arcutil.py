@@ -74,7 +74,7 @@ def arc_to_csv(in_table, out_file, field_list=None):
         writer.writerows(data)
 
 
-def pull_items(inData, fieldList=None):
+def pull_items(inData, fieldList=None, lowercasify=False):
     '''
     Given an input data source and a comma separated string of field names,
     return a fieldinfo object that includes only the fields listed as VISIBLE
@@ -88,8 +88,12 @@ def pull_items(inData, fieldList=None):
     for index in range(len(inputfields)):
         if fieldList:
             if inputfields[index] in fieldList:
-                fieldInfo.addField(inputfields[index],
-                                   inputfields[index], "VISIBLE", "")
+                if lowercasify:
+                    fieldInfo.addField(inputfields[index],
+                                       inputfields[index], "VISIBLE", "")
+                else:
+                    fieldInfo.addField(inputfields[index],
+                                       inputfields[index].lower(), "VISIBLE", "")
             else:
                 fieldInfo.addField(inputfields[index],
                                    inputfields[index], "HIDDEN", "")
@@ -100,7 +104,7 @@ def pull_items(inData, fieldList=None):
 
 
 def copy_data(sourcePath, destPath, query=None, fieldList=None, aoi=None,
-              overwrite=False, clip=False, tableOnly=False):
+              overwrite=False, clip=False, tableOnly=False, lowercasify=False):
     """
     Extract a data layer that has a valid ArcCatalog path to specified location
 
@@ -120,7 +124,7 @@ def copy_data(sourcePath, destPath, query=None, fieldList=None, aoi=None,
         arcpy.env.overwriteOutput = True
         # build fieldinfo object
         if fieldList:
-            fieldinfo = pull_items(sourcePath, fieldList)
+            fieldinfo = pull_items(sourcePath, fieldList, lowercasify)
         else:
             fieldinfo = None
         # if not copying geometry
