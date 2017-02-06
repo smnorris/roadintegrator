@@ -14,7 +14,12 @@ def tiled_sql(sql, tile):
     db.execute(sql, (tile,))
 
 
-@click.command()
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
 def run():
     db = pgdb.connect()
     # create output table
@@ -43,7 +48,11 @@ def run():
     pool.close()
     pool.join()
 
-    # dump to file
+
+@cli.command()
+def dump():
+    # dump output to file
+    click.echo('dumping results_roads to results_roads.gdb')
     db = pgdb.connect()
     db.pg2ogr(sql="SELECT * FROM temp.results_roads",
               driver="FileGDB",
@@ -52,4 +61,4 @@ def run():
 
 
 if __name__ == '__main__':
-    run()
+    cli()
