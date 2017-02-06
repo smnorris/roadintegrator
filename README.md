@@ -49,9 +49,9 @@ Consider manually backing up the extract .gdb to a network drive in event of ser
 
 ## Methodology
 
-- extract all road sources noted in `road_inputs.csv`
-- extract RESULTS polygon roads, converting features to lines by interpreting the the medial axis of input polys (CenterlineReplacer transformer)
-- breaking processing into specified tiles, for each tile:
+- in PostgreSQL/PostGIS, create road lines from RESULTS road polyons (see [results_road_lines](results_road_lines))
+- consolidate all road sources noted in `road_inputs.csv` into a single gdb
+- for each tile noted in tiles.csv (all 250k tils):
     + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on input data priorities specified in `road_inputs.csv`
     + with all linework within the tolerance of `Integrage` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
     + merge the resulting layers into a single output roads layer for the given tile
