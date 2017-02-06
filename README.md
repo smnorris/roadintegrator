@@ -24,8 +24,8 @@ set PATH="E:\sw_nt\Python27\ArcGISx6410.3";"E:\sw_nt\Python27\ArcGISx6410.3\Scri
 ```
 Using pip, ensure the required python libraries are available:
 ```
-pip install click
-pip install pyyaml
+pip install --user click
+pip install --user pyyaml
 ```
 (if pip is not installed, see [installing pip](https://pip.pypa.io/en/stable/installing/))
 
