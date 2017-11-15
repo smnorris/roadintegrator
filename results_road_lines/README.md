@@ -43,8 +43,8 @@ Replace the database credentials below with your own as required.
           -nln rslt_forest_cover_inv_svw \
           -nlt PROMOTE_TO_MULTI \
           -where "stocking_status_code = 'NP' AND stocking_type_code IN ('RD','UNN') AND silv_polygon_number not in ('landing', 'lnd') AND geometry_exist_ind = 'Y'" \
-          <in_file>.gdb \
-          <in_layer>
+          RSLT_FOREST_COVER_INV_SVW.gdb \
+          whse_forest_vegetation_rslt_forest_cover_inv_svw_polygon
 
 - download the [BCGS 1:20,000 grid](https://catalogue.data.gov.bc.ca/dataset/bcgs-1-20-000-grid) and load to postgres. The script expects the data to be in schema `whse_basemapping`, so a command something like this will load it:
 
@@ -69,4 +69,8 @@ Replace the database credentials below with your own as required.
 
 ## Run the job
 
-`python results_road_lines.py`
+`python results_road_lines.py run`
+
+## dump results to file
+
+`python results_road_lines.py dump`
