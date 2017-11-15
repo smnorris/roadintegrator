@@ -45,7 +45,10 @@ def clean_fieldlist(in_string):
     Return a python list from a comma separated list of fields,
     removing any spaces from ends of input
     """
-    return [s.strip() for s in in_string.split(",")]
+    if in_string:
+        return [s.strip() for s in in_string.split(",")]
+    else:
+        return []
 
 
 def arc_to_csv(in_table, out_file, field_list=None):
@@ -87,13 +90,13 @@ def pull_items(inData, fieldList=None, lowercasify=False):
     inputfields = [field.name for field in arcpy.ListFields(inData) if not field.required]
     for index in range(len(inputfields)):
         if fieldList:
-            if inputfields[index] in fieldList:
+            if inputfields[index].upper() in [f.upper() for f in fieldList]:
                 if lowercasify:
                     fieldInfo.addField(inputfields[index],
-                                       inputfields[index], "VISIBLE", "")
+                                       inputfields[index].lower(), "VISIBLE", "")
                 else:
                     fieldInfo.addField(inputfields[index],
-                                       inputfields[index].lower(), "VISIBLE", "")
+                                       inputfields[index].upper(), "VISIBLE", "")
             else:
                 fieldInfo.addField(inputfields[index],
                                    inputfields[index], "HIDDEN", "")

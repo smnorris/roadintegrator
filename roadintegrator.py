@@ -200,6 +200,7 @@ def process(param, tile):
         tile_wksp = arcutil.create_wksp(param["tiledir"], "temp_"+tile+".gdb")
         # try and do all work in memory
         arcpy.env.workspace = "in_memory"
+
         # create a clip layer from grid
         tile_layer = "tile_"+tile+"_lyr"
         tile_query = param["tile_column"]+" LIKE '"+tile+"%'"
@@ -235,7 +236,6 @@ def process(param, tile):
         roads = []
         for layer in param["layers"]:
             mem_layer = layer["alias"]+"_"+tile
-            #print (mem_layer, arcutil.n_records(mem_layer))
             if arcutil.n_records(mem_layer) > 0:
                 roads = roads + [mem_layer]
 

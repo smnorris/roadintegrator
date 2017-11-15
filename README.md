@@ -24,8 +24,8 @@ set PATH="E:\sw_nt\Python27\ArcGISx6410.3";"E:\sw_nt\Python27\ArcGISx6410.3\Scri
 ```
 Using pip, ensure the required python libraries are available:
 ```
-pip install click
-pip install pyyaml
+pip install --user click
+pip install --user pyyaml
 ```
 (if pip is not installed, see [installing pip](https://pip.pypa.io/en/stable/installing/))
 
@@ -37,11 +37,11 @@ pip install pyyaml
     - `config.yml` - misc config options (number of cores, grid to tile by)
 
 2. Extract and prepare source data, writing to working folder on TEMP (as specified in `config.yml`):
-`python roadintegrator extract`
+`python roadintegrator.py extract`
 Consider manually backing up the extract .gdb to a network drive in event of server reboot during processing.
 
 3. Run the integration/conflation job:
-`python roadintegrator integrate`
+`python roadintegrator.py integrate`
 
 4. When processing is complete, copy output layer from `out.gdb` workspace on TEMP to desired location on a network drive.
 
