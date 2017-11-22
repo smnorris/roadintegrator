@@ -1,0 +1,9 @@
+hierarchy,name,alias,url,primary_key,fields,query,preprocess
+1,Digital Road Atlas (DRA),dra,https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads,DIGITAL_ROAD_ATLAS_LINE_ID,"ROAD_NAME_FULL, ROAD_CLASS, ROAD_SURFACE",,
+2,RESULTS - Forest Cover Inventory – roads,results,https://catalogue.data.gov.bc.ca/dataset/results-forest-cover-inventory,RESULTS_ROADS_ID,,,poly2line
+3,Forest Tenure Road Section Lines – active,ften_active,https://catalogue.data.gov.bc.ca/dataset/forest-tenure-road-section-lines,MAP_LABEL,"FOREST_FILE_ID, ROAD_SECTION_ID, FILE_TYPE_DESCRIPTION, CLIENT_NUMBER, CLIENT_NAME",LIFE_CYCLE_STATUS_CODE <> 'RETIRED' AND LIFE_CYCLE_STATUS_CODE <> 'PENDING',
+4,Forest Tenure Road Section Lines – retired,ften_retired,https://catalogue.data.gov.bc.ca/dataset/forest-tenure-road-section-lines,MAP_LABEL,"FOREST_FILE_ID, ROAD_SECTION_ID, FILE_TYPE_DESCRIPTION, CLIENT_NUMBER, CLIENT_NAME",LIFE_CYCLE_STATUS_CODE <> 'ACTIVE',
+5,OGC Petroleum Development Roads Pre-2006,og_dev_pre06,https://catalogue.data.gov.bc.ca/dataset/ogc-petroleum-development-roads-pre-2006-public-version,OG_PETRLM_DEV_RD_PRE06_PUB_ID,"PETRLM_ACCESS_ROAD_TYPE, PROPONENT",,
+6,OGC Petroleum Development Roads,og_dev,https://catalogue.data.gov.bc.ca/dataset/ogc-petroleum-development-roads-public-version,OG_PETRLM_DEV_ROAD_PUB_ID,"PETRLM_ACCESS_ROAD_TYPE, DEACTIVATION_DATE, PROPONENT",,
+7,OGC Petroleum Access Roads,og_access,https://catalogue.data.gov.bc.ca/dataset/ogc-petroleum-access-roads-public-version,OG_PETRLM_ACCESS_ROAD_PUB_ID,"PETRLM_ACCESS_ROAD_TYPE, DEACTIVATION_DATE, PROPONENT",,
+0,BCGS 20K Tiles,tiles_20k,https://catalogue.data.gov.bc.ca/dataset/bcgs-1-20-000-grid,,,,
