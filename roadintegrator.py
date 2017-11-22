@@ -1,5 +1,8 @@
 import os
+import logging
 import tempfile
+import csv
+import shutil
 import yaml
 from datetime import date
 import time
@@ -8,9 +11,85 @@ from multiprocessing import Pool
 from functools import partial
 
 import click
+import bcdata
 import arcpy
 
 import arcutil
+
+
+logging.basicConfig(level=logging.INFO)
+
+HELP = {
+    "csv": 'Path to csv that lists all input data sources',
+    "email": 'A valid email address, used for DataBC downloads',
+    "dl_path": 'Path to folder holding downloaded data',
+    "alias": "The 'alias' key identifing the source of interest, from source csv"}
+
+
+def get_files(path):
+    """Returns an iterable containing the full path of all files in the
+    specified path.
+    https://github.com/OpenBounds/Processing/blob/master/utils.py
+    """
+    if os.path.isdir(path):
+        for (dirpath, dirnames, filenames) in os.walk(path):
+            for filename in filenames:
+                if not filename[0] == '.':
+                    yield os.path.join(dirpath, filename)
+    else:
+        yield path
+
+
+def read_csv(path):
+    """
+    Returns list of dicts from file, sorted by 'hierarchy' column
+    https://stackoverflow.com/questions/72899/
+    """
+    source_list = [source for source in csv.DictReader(open(path, 'rb'))]
+    # convert hierarchy value to integer
+    for source in source_list:
+        source.update((k, int(v)) for k, v in source.iteritems()
+                      if k == "hierarchy" and v != '')
+    return sorted(source_list, key=lambda k: k['hierarchy'])
+
+
+def make_sure_path_exists(path):
+    """
+    Make directories in path if they do not exist.
+    Modified from http://stackoverflow.com/a/5032238/1377021
+    """
+    try:
+        os.makedirs(path)
+        return path
+    except:
+        pass
+
+
+def get_path_parts(path):
+    """Splits a path into parent directories and file.
+    """
+    return path.split(os.sep)
+
+
+def download_bcgw(url, dl_path, email=None, gdb=None):
+    """Download BCGW data using DWDS
+    """
+    # make sure an email is provided
+    if not email:
+        email = os.environ["BCDATA_EMAIL"]
+    if not email:
+        raise Exception("An email address is required to download BCGW data")
+    # check that the extracted download isn't already in tmp
+    if gdb and os.path.exists(os.path.join(dl_path, gdb)):
+        return os.path.join(dl_path, gdb)
+    else:
+        download = bcdata.download(url, email)
+        if not download:
+            raise Exception("Failed to create DWDS order")
+        # move the downloaded .gdb to specified dl_path
+        out_gdb = os.path.split(download)[1]
+        shutil.copytree(download, os.path.join(dl_path, out_gdb))
+        return os.path.join(dl_path, out_gdb)
 
 
 def parse_layers_tiles(param, layers, tiles):
