@@ -7,14 +7,16 @@ Note that the road merging process is an approximation - the output should not b
 ## Requirements
 
 - Python 2.7
-- PostgreSQL (tested with v10.1)
-- PostGIS (tested with v2.4)
-- ArcGIS Desktop (tested on v10.1+)
+- ArcGIS Desktop (tested with v10.3)
 - ArcGIS 64 bit background geoprocessing add-on
+- GDAL/OGR (tested with v2.2.1)
+- PostgreSQL (tested with v10.1)
+- PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.4)
 
-Note that as the script requires ArcGIS, it runs only on Windows.
+**NOTE**: as the `integrate` portion of the script requires ArcGIS, it runs only on Windows.
 
-## Setup 
+## Setup
+
 1. Ensure that Python 2.7 64 bit (and scripts) bundled with ArcGIS are available at the command prompt. Either check your PATH Environment variable via the Control Panel or open a 64 bit command prompt window and modify the PATH directly like this (modify the path based on your ArcGIS install path):
 
         set PATH="E:\sw_nt\Python27\ArcGISx6410.3";"E:\sw_nt\Python27\ArcGISx6410.3\Scripts";%PATH%
@@ -38,10 +40,37 @@ Note that as the script requires ArcGIS, it runs only on Windows.
         pip install --user -r requirements.txt
         
 
+## Configuration
+
+### config.yml
+To modify processing tolerances and default database/files/folders, edit `config.yml`. 
+
+### sources.csv
+To modify the source layers used in the analysis, edit the file referenced as `datalist` in `config.yml`. The default datalist file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **hierarchy** column. Columns are as follows:
+
+| COLUMN                 | DESCRIPTION                                                                                                                                                                            | 
+|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+| **priority**              | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`. 
+| **name**                   | Full name of the source layer 
+| **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
+|**primary_key**             | The source layer's primary key
+| **fields**                 | The fields in the source layer to retain in the output
+| **url**                    | Download url for the data source
+| **layer_in_file**          | The layer of interest within the downloaded file
+| **query**                  | A SQL query defining the subset of data of interest from the given file/layer (SQLite dialect)
+| **metadata_url**           | URL for metadata reference
+| **info_url**               | Background/info url in addtion to metadata (if available)
+| **preprocess_operation**   |
+| **license**                | The license under which the data is distrubted
+
 
 ## Usage
 
-1. Generate road lines from RESULTS roads polygons, see results_roads_lines/README.md
+1. Download and consolidate all required data:
+    
+        $ python roadintegrator.py load
+
+2. Generate road lines from RESULTS roads polygons, see results_roads_lines/README.md
 
 2. Modify configuration files as required. Changing the path to the ResultsRoads layer generated in setup above will likely be required:
     - `road_inputs.csv` - definitions (layer, query, included attributes, etc) for all inputs to analysis

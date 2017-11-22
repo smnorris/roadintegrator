@@ -1,6 +1,9 @@
 # Edit processing configuration here
-datalist: sources.csv                   # file containing list of source layers
+source_data: source_data                # name of folder to hold downloads
+source_csv: sources.csv                   # file containing list of source layers
+tolerance: 7                            # integrate tolerance (m)
 grid: tiles_20k                         # alias of tile layer in datalist
 tile_column: MAP_TILE                   # tile name field in tile layer
-tolerance: 7                            # integrate tolerance (m)
 output: integrated_roads                # output feature class name
+# postgresql db SQLAlchemy connection string
+db_url: postgresql://postgres:postgres@localhost:5432/roadintegrator
