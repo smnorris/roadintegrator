@@ -2,7 +2,7 @@
 
 Collect various BC road data sources, preprocess and tile, then use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
 
-Note that the merging process is a simple snapping of nearby roads - this is an approximation and the output should not be considered definitive. Output is for specific Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network please use the various source road data appropriately.
+Note that the road merging process is an approximation - the output should not be considered definitive. Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network please use the individual source road layers.
 
 ## Requirements
 
@@ -12,19 +12,32 @@ Note that the merging process is a simple snapping of nearby roads - this is an 
 - ArcGIS Desktop (tested on v10.1+)
 - ArcGIS 64 bit background geoprocessing add-on
 
+Note that as the script requires ArcGIS, it runs only on Windows.
 
-## Setup
+## Setup 
+1. Ensure that Python 2.7 64 bit (and scripts) bundled with ArcGIS are available at the command prompt. Either check your PATH Environment variable via the Control Panel or open a 64 bit command prompt window and modify the PATH directly like this (modify the path based on your ArcGIS install path):
 
-1. Using pip, install the required python libraries:
-```
-pip install --user -r requirements.txt
-```
-(if pip is not installed, see [installing pip](https://pip.pypa.io/en/stable/installing/))
+        set PATH="E:\sw_nt\Python27\ArcGISx6410.3";"E:\sw_nt\Python27\ArcGISx6410.3\Scripts";%PATH%
 
-Open a 64bit command prompt window and ensure that the 64bit Python executable is referenced in your PATH variable with this command:
-```
-set PATH="E:\sw_nt\Python27\ArcGISx6410.3";"E:\sw_nt\Python27\ArcGISx6410.3\Scripts";%PATH%
-```
+2. Ensure pip is installed, [install]((https://pip.pypa.io/en/stable/installing/)) if it is not.
+
+3. (Optional) Consider installing dependencies to a virtual environment rather than to the system Python or your home directory:
+
+         $ pip install virtualenv                   # if not already installed
+         $ mkdir roadintegrator_venv
+         $ virtualenv roadintegrator_venv
+         $ roadintegrator_venv\Scripts\activate     # activate the env
+
+4. Clone the repository:  
+        
+        git clone https://github.com/bcgov/roadintegrator.git
+
+5. Using pip, install the required Python libraries:  
+        
+        cd roadintegrator
+        pip install --user -r requirements.txt
+        
+
 
 ## Usage
 
