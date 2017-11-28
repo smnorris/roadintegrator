@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import csv
+from datetime import date
 from functools import partial
 import hashlib
 import logging
@@ -97,9 +98,10 @@ def tiled_sql_geos(sql, tile):
     db.execute(sql, (tile,))
 
 
-def roadpoly2line(alias):
-    """Translate road polygon boundaries into road-like lines
+def tile(source):
+    """Tile input road table
     """
+    alias = source['alias']
     db = pgdb.connect(CONFIG['db_url'], schema='public')
 
     # move input table to '_src'
@@ -107,8 +109,59 @@ def roadpoly2line(alias):
         sql = 'ALTER TABLE {t} RENAME TO {t}_src'.format(t=alias)
         db.execute(sql)
 
-    # just in case we are resuming from a bail
+    # get a list of tiles present in the data
+    # (this takes a little while, so keep the result on hand)
+    if alias+'_tiles' not in db.tables:
+        info(alias+': generating list of tiles')
+        sql = """CREATE TABLE {out} AS
+                 SELECT a.map_tile
+                 FROM tiles_20k a
+                 INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
+                 ORDER BY a.map_tile""".format(src=alias+'_src',
+                                               out=alias+'_tiles')
+        db.execute(sql)
+    tiles = [t for t in db[alias+'_tiles'].distinct('map_tile')]
+
+    # create empty output table
     db[alias].drop()
+    fields = source['primary_key']+','+source['fields'].lower()
+    db.execute("""CREATE TABLE {t} AS
+                  SELECT {f},
+                  ''::text as map_tile,
+                  geom
+                  FROM {src}
+                  LIMIT 0
+               """.format(t=alias,
+                          f=fields,
+                          src=alias+'_src'))
+
+    lookup = {'src_table': alias+'_src',
+              'out_table': alias,
+              'fields': fields}
+    sql = db.build_query(db.queries['tile_roads'], lookup)
+
+    # tile, clean and add required columns
+    info(alias+': tiling and cleaning')
+    func = partial(tiled_sql_geos, sql)
+    pool = multiprocessing.Pool(processes=3)
+    results_iter = pool.imap_unordered(func, tiles)
+    with click.progressbar(results_iter, length=len(tiles)) as bar:
+        for _ in bar:
+            pass
+    pool.close()
+    pool.join()
+
+
+def roadpoly2line(source):
+    """Translate road polygon boundaries into road-like lines
+    """
+    alias = source['alias']
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+
+    # move input table to '_src'
+    if alias+'_src' not in db.tables:
+        sql = 'ALTER TABLE {t} RENAME TO {t}_src'.format(t=alias)
+        db.execute(sql)
 
     # create filter_rings function
     db.execute(db.queries['filter_rings'])
@@ -116,13 +169,15 @@ def roadpoly2line(alias):
     # get a list of tiles present in the data
     # (this takes a little while, so keep the result on hand)
     if alias+'_tiles' not in db.tables:
-        info('results: generating list of tiles')
-        sql = """CREATE TABLE results_tiles AS
+        info(alias+': generating list of tiles')
+        sql = """CREATE TABLE {out} AS
                  SELECT a.map_tile
                  FROM tiles_20k a
-                 INNER JOIN {t} b ON ST_Intersects(a.geom, b.geom)
-                 ORDER BY a.map_tile""".format(t=alias+'_src')
-    tiles = [t for t in db["results_tiles"].distinct('map_tile')]
+                 INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
+                 ORDER BY a.map_tile""".format(src=alias+'_src',
+                                               out=alias+'_tiled')
+        db.execute(sql)
+    tiles = [t for t in db[alias+'_tiles'].distinct('map_tile')]
 
     # create tiled/cleaned layer
     if alias+'_cleaned' not in db.tables:
@@ -136,7 +191,7 @@ def roadpoly2line(alias):
         sql = db.build_query(db.queries['results_tile_clean'], lookup)
 
         # tile and clean using GEOS backend
-        info('results: tiling and cleaning')
+        info(alias+': tiling and cleaning')
         func = partial(tiled_sql_geos, sql)
         pool = multiprocessing.Pool(processes=3)
         results_iter = pool.imap_unordered(func, tiles)
@@ -156,7 +211,7 @@ def roadpoly2line(alias):
               'out_table': alias}
     sql = db.build_query(db.queries['roadpoly2line'], lookup)
     # process poly2line using SFCGAL backend
-    info('results: generating road lines from polygons')
+    info(alias+': generating road lines from polygons')
     func = partial(tiled_sql_sfcgal, sql)
     pool = multiprocessing.Pool(processes=3)
     results_iter = pool.imap_unordered(func, tiles)
@@ -237,14 +292,13 @@ def load(source_csv, email, dl_path, alias, force_refresh):
                       sql=source['query'])
 
 
-
 @cli.command()
 @click.option('--source_csv', '-s', default=CONFIG['source_csv'],
               type=click.Path(exists=True), help=HELP['csv'])
 @click.option('--alias', '-a', help=HELP['alias'])
 def preprocess(source_csv, alias):
-    """Prepare input road data"""
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    """Prepare input road data
+    """
     sources = read_csv(source_csv)
     if alias:
         sources = [s for s in sources if s['alias'] == alias]
@@ -254,7 +308,7 @@ def preprocess(source_csv, alias):
         info('Preprocessing %s' % source['alias'])
         # call noted preprocessing function
         function = source['preprocess_operation']
-        globals()[function](source['alias'])
+        globals()[function](source)
 
 
 if __name__ == '__main__':
