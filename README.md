@@ -40,6 +40,11 @@ Note that the road merging process is an approximation - the output should not b
         pip install --user -r requirements.txt
         
 
+6. Using the `pgxn` client (installed via `requirements.txt`, above), install the `lostgis` extension:
+
+        $ pgxn install lostgis
+
+        
 ## Configuration
 
 ### config.yml
@@ -58,11 +63,10 @@ To modify the source layers used in the analysis, edit the file referenced as `d
 | **url**                    | Download url for the data source
 | **layer_in_file**          | The layer of interest within the downloaded file
 | **query**                  | A SQL query defining the subset of data of interest from the given file/layer (SQLite dialect)
-| **metadata_url**           | URL for metadata reference
-| **info_url**               | Background/info url in addtion to metadata (if available)
 | **preprocess_operation**   |
 | **license**                | The license under which the data is distrubted
 
+Note that only Province of BC data sources are supported for download.
 
 ## Usage
 
@@ -70,19 +74,16 @@ To modify the source layers used in the analysis, edit the file referenced as `d
     
         $ python roadintegrator.py load
 
-2. Generate road lines from RESULTS roads polygons, see results_roads_lines/README.md
+2. Preprocess RESTULTS roads (generate lines from polygons):
 
-2. Modify configuration files as required. Changing the path to the ResultsRoads layer generated in setup above will likely be required:
-    - `road_inputs.csv` - definitions (layer, query, included attributes, etc) for all inputs to analysis
-    - `tiles.csv` - list of tiles to process (250k or 20k, 250 works well)
-    - `config.yml` - misc config options (number of cores, grid to tile by)
+        $ python roadintegratory.py preprocess
 
-3. Extract and prepare source data, writing to working folder on TEMP (as specified in `config.yml`):
-`python roadintegrator.py extract`
-Consider manually backing up the extract .gdb to a network drive in event of server reboot during processing.
+3. Run the road integration:
 
-4. Run the integration/conflation job:
-`python roadintegrator.py integrate`
+        $ python roadintegrator.py integrate
+
+
+
 
 5. When processing is complete, copy output layer from `out.gdb` workspace on TEMP to desired location on a network drive.
 
