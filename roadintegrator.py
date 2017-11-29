@@ -98,7 +98,7 @@ def tiled_sql_geos(sql, tile):
     db.execute(sql, (tile,))
 
 
-def tile(source):
+def tile(source, n_processes):
     """Tile input road table
     """
     alias = source['alias']
@@ -143,7 +143,7 @@ def tile(source):
     # tile, clean and add required columns
     info(alias+': tiling and cleaning')
     func = partial(tiled_sql_geos, sql)
-    pool = multiprocessing.Pool(processes=3)
+    pool = multiprocessing.Pool(processes=n_processes)
     results_iter = pool.imap_unordered(func, tiles)
     with click.progressbar(results_iter, length=len(tiles)) as bar:
         for _ in bar:
@@ -152,7 +152,7 @@ def tile(source):
     pool.join()
 
 
-def roadpoly2line(source):
+def roadpoly2line(source, n_processes):
     """Translate road polygon boundaries into road-like lines
     """
     alias = source['alias']
@@ -193,7 +193,7 @@ def roadpoly2line(source):
         # tile and clean using GEOS backend
         info(alias+': tiling and cleaning')
         func = partial(tiled_sql_geos, sql)
-        pool = multiprocessing.Pool(processes=3)
+        pool = multiprocessing.Pool(processes=n_processes)
         results_iter = pool.imap_unordered(func, tiles)
         with click.progressbar(results_iter, length=len(tiles)) as bar:
             for _ in bar:
@@ -213,7 +213,7 @@ def roadpoly2line(source):
     # process poly2line using SFCGAL backend
     info(alias+': generating road lines from polygons')
     func = partial(tiled_sql_sfcgal, sql)
-    pool = multiprocessing.Pool(processes=3)
+    pool = multiprocessing.Pool(processes=n_processes)
     results_iter = pool.imap_unordered(func, tiles)
     with click.progressbar(results_iter, length=len(tiles)) as bar:
         for _ in bar:
@@ -296,7 +296,9 @@ def load(source_csv, email, dl_path, alias, force_refresh):
 @click.option('--source_csv', '-s', default=CONFIG['source_csv'],
               type=click.Path(exists=True), help=HELP['csv'])
 @click.option('--alias', '-a', help=HELP['alias'])
-def preprocess(source_csv, alias):
+@click.option('--n_processes', '-p', default=multiprocessing.cpu_count() - 1,
+              help="Number of parallel processing threads to utilize")
+def preprocess(source_csv, alias, n_processes):
     """Prepare input road data
     """
     sources = read_csv(source_csv)
@@ -308,7 +310,7 @@ def preprocess(source_csv, alias):
         info('Preprocessing %s' % source['alias'])
         # call noted preprocessing function
         function = source['preprocess_operation']
-        globals()[function](source)
+        globals()[function](source, n_processes)
 
 
 if __name__ == '__main__':
