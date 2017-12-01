@@ -2,7 +2,7 @@
 
 Collect various BC road data sources, preprocess and tile, then use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
 
-Note that the road merging process is an approximation - the output should not be considered definitive. Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network please use the individual source road layers.
+Note that the road merging process is an approximation - the output should not be considered definitive. Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers.
 
 ## Requirements
 
@@ -80,34 +80,19 @@ Note that only Province of BC data sources are supported for download.
 
 3. Run the road integration:
 
-        $ python roadintegrator.py integrate
+        $ python roadintegrator.py process
 
+4. When processing is complete, find output layer in `output` gdb specified in `config.yml`
 
-
-
-5. When processing is complete, copy output layer from `out.gdb` workspace on TEMP to desired location on a network drive.
-
-**NOTE** *The integrate command spawns as many processess as specified in `config.yml`! You can potentially consume a very significant portion of a server's resources. Please be aware of other users and only run large multiprocessing jobs during non-peak hours.*
 
 ## Methodology
 
-- create lines from RESULTS road polyons using PostGIS (see [results_road_lines](results_road_lines))
-- consolidate all road sources noted in `road_inputs.csv` into a single gdb
-- for each tile noted in tiles.csv (all 250k tils):
-    + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on input data priorities specified in `road_inputs.csv`
+- download all required source data from DataBC Catalogue
+- load all source data to PostGIS
+- in PostGIS, preprocess source road layers, creating lines from RESULTS road polyons and tiling all sources
+- dump sources road layers into a single gdb
+- looping through tiles (20k or 250k):
+    + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on input data priorities specified in `sources.csv`
     + with all linework within the tolerance of `Integrage` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
     + merge the resulting layers into a single output roads layer for the given tile
 - merge all tiles into a provincial roads layer
-
-## Performance
-
-Integrate command only, 250k tiles:
-
-6 cores: 21.75min;
-8 cores: 16.9min;
-10 cores: 14.9min;
-
-## Todo
-
-- multi core extract for more speed
-
