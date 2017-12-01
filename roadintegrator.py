@@ -54,6 +54,18 @@ def error(*strings):
     logging.error(' '.join(strings))
 
 
+def make_sure_path_exists(path):
+    """
+    Make directories in path if they do not exist.
+    Modified from http://stackoverflow.com/a/5032238/1377021
+    """
+    try:
+        os.makedirs(path)
+        return path
+    except:
+        pass
+
+
 def get_250k_tiles(db):
     sql = """SELECT DISTINCT substring({c} from 1 for 4) as tile
              FROM tiles_20k
@@ -189,6 +201,7 @@ def integrate(sources, tile):
     """
     src_wksp = os.path.join(CONFIG['temp_data'], 'sources.gdb')
     tile_wksp = os.path.join(CONFIG['temp_data'], 'tiles')
+    make_sure_path_exists(tile_wksp)
     out_fc = os.path.join(tile_wksp, 'temp_'+tile+'.gdb', 'roads_'+tile)
     if not arcpy.Exists(out_fc):
         start_time = time.time()
