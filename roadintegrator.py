@@ -20,11 +20,14 @@ import logging
 import multiprocessing
 import os
 import shutil
+import time
 from urlparse import urlparse
 import yaml
 
+import arcpy
 import click
 
+import arcutil
 import bcdata
 import pgdb
 
@@ -49,6 +52,13 @@ def info(*strings):
 
 def error(*strings):
     logging.error(' '.join(strings))
+
+
+def get_250k_tiles(db):
+    sql = """SELECT DISTINCT substring({c} from 1 for 4) as tile
+             FROM tiles_20k
+          """.format(c=CONFIG['tile_column'])
+    return [t[0] for t in db.query(sql)]
 
 
 def read_csv(path):
@@ -98,6 +108,22 @@ def tiled_sql_geos(sql, tile):
     db.execute(sql, (tile,))
 
 
+def add_meta_columns(db, source):
+    """ Add and populate required columns: bcgw_extraction_date, bcgw_source
+    """
+    alias = source['alias']
+    info('adding bcgw source and extraction date columns')
+    for col in ['bcgw_source', 'bcgw_extraction_date']:
+        sql = """ALTER TABLE {t} ADD COLUMN IF NOT EXISTS {c} text
+              """.format(t=alias, c=col)
+        db.execute(sql)
+    sql = """UPDATE {t} SET {c1} = %s, {c2} = %s
+          """.format(t=alias,
+                     c1='bcgw_source',
+                     c2='bcgw_extraction_date')
+    db.execute(sql, (source['source_table'], date.today().isoformat()))
+
+
 def tile(source, n_processes):
     """Tile input road table
     """
@@ -140,7 +166,7 @@ def tile(source, n_processes):
               'fields': fields}
     sql = db.build_query(db.queries['tile_roads'], lookup)
 
-    # tile, clean and add required columns
+    # tile, clean
     info(alias+': tiling and cleaning')
     func = partial(tiled_sql_geos, sql)
     pool = multiprocessing.Pool(processes=n_processes)
@@ -150,6 +176,84 @@ def tile(source, n_processes):
             pass
     pool.close()
     pool.join()
+
+
+def integrate(sources, tile):
+    """
+    For given tile:
+      - load road data from each source
+      - shift low priority roads within specified tolerance of higher priority
+        roads to match position of higher priority roads
+      - remove duplicate roads from lower priority source
+      - merge all road sources into single layer
+    """
+    src_wksp = os.path.join(CONFIG['temp_data'], 'sources.gdb')
+    tile_wksp = os.path.join(CONFIG['temp_data'], 'tiles')
+    out_fc = os.path.join(tile_wksp, 'temp_'+tile+'.gdb', 'roads_'+tile)
+    if not arcpy.Exists(out_fc):
+        start_time = time.time()
+        # create tile workspace
+        tile_wksp = arcutil.create_wksp(tile_wksp, 'temp_'+tile+'.gdb')
+        # try and do all work in memory
+        arcpy.env.workspace = 'in_memory'
+        # get data for each source layer within given tile
+        for layer in sources:
+            src_layer = os.path.join(src_wksp, layer['alias'])
+            mem_layer = layer['alias']+'_'+tile
+            tile_query = CONFIG['tile_column']+" LIKE '"+tile+"%'"
+            arcutil.copy_data(src_layer, mem_layer, tile_query)
+            # repair geom slows things down but we want to be tidy
+            arcpy.RepairGeometry_management(mem_layer)
+
+        # use only layers that actually have data for the tile
+        roads = []
+        for layer in sources:
+            mem_layer = layer['alias']+'_'+tile
+            if arcutil.n_records(mem_layer) > 0:
+                roads = roads + [mem_layer]
+
+        # only run the integrate / erase etc if there is more than one road source
+        if len(roads) > 1:
+            # regenerate priority numbers, in case empty layers have been removed
+            integrate_str = ';'.join([r+' '+str(i+1) for i,r in enumerate(roads)])
+            # perform integrate, modifing extracted road data in place,
+            # snapping roads within tolerance
+            arcpy.Integrate_management(integrate_str, CONFIG['tolerance'])
+            # start with the roads of top priority,
+            in_layer = roads[0]
+            # then loop through the rest of the roads
+            for i in range(1, len(roads)):
+                out_layer = 'temp_'+tile+'_'+str(i)
+                # erase first layer or previous output with next roads layer
+                arcpy.Erase_analysis(roads[i],
+                                     in_layer,
+                                     'temp_missing_roads_'+tile,
+                                     '0.01 Meters')
+                # merge the output missing roads with the previous input
+                arcpy.Merge_management(["temp_missing_roads_"+tile, in_layer],
+                                       out_layer)
+                arcpy.Delete_management("temp_missing_roads_"+tile)
+                in_layer = out_layer
+            # write to output gdb
+            arcutil.copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
+            # delete temp layers
+            for i in range(1, len(roads)):
+                arcpy.Delete_management("temp_"+tile+"_"+str(i))
+
+        # append single road source to output
+        elif len(roads) == 1:
+            arcutil.copy_data(roads[0], os.path.join(tile_wksp, "roads_"+tile))
+
+        # if there aren't any roads, don't do anything
+        elif len(roads) == 0:
+            click.echo('No roads present in tile '+tile)
+
+        # cleanup
+        for layer in sources:
+            if arcpy.Exists(layer["alias"]+"_"+tile):
+                arcpy.Delete_management(layer["alias"]+"_"+tile)
+        elapsed_time = time.time() - start_time
+        click.echo("Completed "+tile+": "+str(elapsed_time))
 
 
 def roadpoly2line(source, n_processes):
@@ -301,6 +405,7 @@ def load(source_csv, email, dl_path, alias, force_refresh):
 def preprocess(source_csv, alias, n_processes):
     """Prepare input road data
     """
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
     sources = read_csv(source_csv)
     if alias:
         sources = [s for s in sources if s['alias'] == alias]
@@ -311,7 +416,54 @@ def preprocess(source_csv, alias, n_processes):
         # call noted preprocessing function
         function = source['preprocess_operation']
         globals()[function](source, n_processes)
+        # add required extraction date and source layer columns
+        add_meta_columns(db, source)
+        # dump data to .gdb for subsequent arcpy processing
+        # (query layers pointing to postgres in arcgis should work fine, but
+        # this allows us to use existing code)
+        db.pg2ogr('SELECT * FROM {t}'.format(t=source['alias']),
+                  'FileGDB',
+                  os.path.join(CONFIG['temp_data'], 'sources.gdb'),
+                  source['alias'],
+                  geom_type='MULTILINESTRING')
 
+
+@cli.command()
+@click.option('--source_csv', '-s', default=CONFIG['source_csv'],
+              type=click.Path(exists=True), help=HELP['csv'])
+@click.option('--n_processes', '-p', default=multiprocessing.cpu_count() - 1,
+              help="Number of parallel processing threads to utilize")
+@click.option("--tiles", "-t",
+              help='Comma separated list of tiles to process')
+def process(source_csv, alias, n_processes, tiles):
+    """ Process road integration
+    """
+    start_time = time.time()
+    if not tiles:
+        db = pgdb.connect(CONFIG['db_url'], schema='public')
+        tiles = get_250k_tiles(db)
+    sources = read_csv(source_csv)
+    # only use a source layer if it has a priority value
+    sources = [s for s in sources if s['priority'] != 0]
+    # split processing between multiple processes
+    # n processes is equal to processess parmeter in config
+    func = partial(integrate, sources)
+    pool = multiprocessing.Pool(processes=n_processes)
+    pool.map(func, tiles)
+    pool.close()
+    pool.join()
+
+    elapsed_time = time.time() - start_time
+    click.echo("All tiles complete in : "+str(elapsed_time))
+    click.echo("Merging tiles to output...")
+    # merge outputs to single output layer
+    outputs = []
+    for t in tiles:
+        fc = os.path.join(CONFIG['temp_dir'], 'tiles', 'temp_'+t+'.gdb', 'roads_'+t)
+        if arcpy.Exists(fc):
+            outputs = outputs + [fc]
+    arcpy.Merge_management(outputs, CONFIG['output'])
+    click.echo('Output ready in : ' + CONFIG['output'])
 
 if __name__ == '__main__':
     cli()
