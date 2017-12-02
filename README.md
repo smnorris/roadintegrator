@@ -7,7 +7,7 @@ Note that the road merging process is an approximation - the output should not b
 ## Requirements
 
 - Python 2.7
-- ArcGIS Desktop (tested with v10.3)
+- ArcGIS Desktop (with Advanced License, tested with v10.1)
 - ArcGIS 64 bit background geoprocessing add-on
 - GDAL/OGR (tested with v2.2.1)
 - PostgreSQL (tested with v10.1)

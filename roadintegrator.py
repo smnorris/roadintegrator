@@ -215,8 +215,6 @@ def integrate(sources, tile):
             mem_layer = layer['alias']+'_'+tile
             tile_query = CONFIG['tile_column']+" LIKE '"+tile+"%'"
             arcutil.copy_data(src_layer, mem_layer, tile_query)
-            # repair geom slows things down but we want to be tidy
-            arcpy.RepairGeometry_management(mem_layer)
 
         # use only layers that actually have data for the tile
         roads = []
@@ -455,11 +453,14 @@ def process(source_csv, n_processes, tiles):
     if not tiles:
         db = pgdb.connect(CONFIG['db_url'], schema='public')
         tiles = get_250k_tiles(db)
+    else:
+        tiles = tiles.split(',')
     sources = read_csv(source_csv)
     # only use a source layer if it has a priority value
     sources = [s for s in sources if s['priority'] != 0]
     # split processing between multiple processes
     # n processes is equal to processess parmeter in config
+    click.echo("Processing tiles")
     func = partial(integrate, sources)
     pool = multiprocessing.Pool(processes=n_processes)
     pool.map(func, tiles)
