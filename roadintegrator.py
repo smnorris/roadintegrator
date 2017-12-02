@@ -448,7 +448,7 @@ def preprocess(source_csv, alias, n_processes):
               help="Number of parallel processing threads to utilize")
 @click.option("--tiles", "-t",
               help='Comma separated list of tiles to process')
-def process(source_csv, alias, n_processes, tiles):
+def process(source_csv, n_processes, tiles):
     """ Process road integration
     """
     start_time = time.time()

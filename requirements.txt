@@ -1,3 +1,4 @@
+pyaml
 pgxnclient
 Click
 git+https://github.com/smnorris/bcdata#egg=bcdata
