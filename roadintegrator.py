@@ -1,261 +1,245 @@
-import os
-import tempfile
-import yaml
-from datetime import date
-import time
-import getpass
-from multiprocessing import Pool
-from functools import partial
+# Copyright 2017 Province of British Columbia
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-import click
+import csv
+from datetime import date
+from functools import partial
+import hashlib
+import logging
+import multiprocessing
+import os
+import shutil
+import time
+from urlparse import urlparse
+import yaml
+
 import arcpy
+import click
 
 import arcutil
+import bcdata
+import pgdb
 
 
-def parse_layers_tiles(param, layers, tiles):
+with open('config.yml', 'r') as ymlfile:
+    CONFIG = yaml.load(ymlfile)
+
+HELP = {
+    'csv': 'Path to csv that lists all input data sources',
+    'email': 'A valid email address, used for DataBC downloads',
+    'dl_path': 'Path to folder holding downloaded data',
+    'alias': "The 'alias' key identifing the source of interest, from source csv",
+    'out_file': 'Output geopackage name',
+    'out_format': 'Output format. Default GPKG (Geopackage)'}
+
+logging.basicConfig(level=logging.INFO)
+
+
+def info(*strings):
+    logging.info(' '.join(strings))
+
+
+def error(*strings):
+    logging.error(' '.join(strings))
+
+
+def make_sure_path_exists(path):
     """
-    Create lists from strings if provided.
-    Otherwise supply defaults
+    Make directories in path if they do not exist.
+    Modified from http://stackoverflow.com/a/5032238/1377021
     """
-    if layers:
-        layers = layers.split(",")
-        layers = [l for l in param["layers"] if l["alias"] in layers]
-    else:
-        layers = param["layers"]
-
-    return (layers, tiles)
-
-
-def initialize_output(param):
-    """
-    Create empty output feature class
-    """
-    wksp, fc = os.path.split(out_fc)
-    # set workspace to in_memory in an attempt to speed things up a bit
-    arcpy.env.workspace = 'in_memory' #wksp
-    # overwrite any existing outputs
-    arcpy.env.overwriteOutput = True
-
-    # create output feature class
-    if not arcpy.Exists(out_fc):
-        arcpy.CreateFeatureclass_management(wksp, fc,
-                                            "POLYLINE", "", "", "",
-                                            BC_ALBERS_SR)
-        # add all columns noted in source .csv
-        for road in param["layers"]:
-            fields = arcutil.clean_fieldlist(road["primary_key"])+arcutil.clean_fieldlist(road["fields"])
-            for field in arcpy.ListFields(os.path.join(srcWksp, road["alias"])):
-                if field.name in fields:
-                    # only add a field once
-                    # (ften primary key is listed twice as ften is coming from
-                    # two source layers - they are mutually exclusive so a single
-                    # key should be fine)
-                    if field.name not in [f.name for f in arcpy.ListFields(outFC)]:
-                        arcpy.AddField_management(outFC,
-                                                  field.name,
-                                                  ARC_TYPE_LOOKUP[field.type],
-                                                  field.precision,
-                                                  field.scale,
-                                                  field.length)
-            # add date and source fields
-            arcpy.AddField_management(outFC,
-                                      "BCGW_SOURCE", "TEXT", "", "", "255")
-            arcpy.AddField_management(outFC,
-                                      "BCGW_EXTRACTION_DATE",
-                                      "TEXT", "", "", "255")
-
-
-def setup(layers=None, tiles=None):
-    """
-    Read paramaters file, create required folders, .gdbs, connections
-    """
-    # read config/parameters
-    with open("config.yml", 'r') as ymlfile:
-        cfg = yaml.load(ymlfile)
-    param = cfg
-    # create folder structure in tmp
-    param["TMP"] = os.path.join(tempfile.gettempdir(), cfg["tmpdir"])
     try:
-        os.makedirs(os.path.join(param["TMP"], "tiles"))
-    except OSError:
-        if not os.path.isdir(os.path.join(param["TMP"], "tiles")):
-            raise
-    # create workspaces and point to them in the param dict
-    for gdb in ["src", "prep", "out"]:
-        param[gdb+"_wksp"] = arcutil.create_wksp(param["TMP"], gdb+".gdb")
-    # point to tile processing folder
-    param["tiledir"] = os.path.join(param["TMP"], "tiles")
-    # create BCGW connection if not present
-    if "BCGW_USR" not in param.keys():
-        param["BCGW_USR"] = getpass.getuser()
-    param["BCGW"] = arcutil.create_bcgw_connection(param["BCGW_USR"])
-    # get grid tile layer
-    if not arcpy.Exists(os.path.join(param["src_wksp"], "grid")):
-        arcutil.copy_data(os.path.join(param['BCGW'], param["grid"]),
-                          os.path.join(param["src_wksp"], "grid"),
-                          fieldList=param["tile_column"])
+        os.makedirs(path)
+        return path
+    except:
+        pass
 
-    # read datalist and tile list
-    param["layers"] = arcutil.read_datalist(param["datalist"])
-    if layers:
-        layers = layers.split(",")
-        subset = [l for l in param["layers"] if l["alias"] in layers]
-        param["layers"] = subset
-    if tiles:
-        param["tiles"] = tiles.split(",")
+
+def get_250k_tiles(db):
+    sql = """SELECT DISTINCT substring({c} from 1 for 4) as tile
+             FROM tiles_20k
+          """.format(c=CONFIG['tile_column'])
+    return [t[0] for t in db.query(sql)]
+
+
+def read_csv(path):
+    """Return list of dicts from file, sorted by 'priority' column
+    """
+    source_list = [source for source in csv.DictReader(open(path, 'rb'))]
+    # convert priority value to integer
+    for source in source_list:
+        source.update((k, int(v)) for k, v in source.iteritems()
+                      if k == 'priority' and v != '')
+    return sorted(source_list, key=lambda k: k['priority'])
+
+
+def download_bcgw(url, dl_path, email=None, force_refresh=False):
+    """Download BCGW data using DWDS
+    """
+    # make sure an email is provided
+    if not email:
+        email = os.environ['BCDATA_EMAIL']
+    if not email:
+        raise Exception('An email address is required to download BCGW data')
+    # check that the extracted download isn't already in tmp
+    gdb = hashlib.sha224(url).hexdigest()+'.gdb'
+    if os.path.exists(os.path.join(dl_path, gdb)) and not force_refresh:
+        return os.path.join(dl_path, gdb)
     else:
-        param["tiles"] = [t['MAP_TILE'] for t in arcutil.read_datalist(param["tilelist"])]
-
-    # update source paths prefixed with a $ variable
-    # There needs to be a lookup in config.yml for any paths other than
-    # BCGW and TMP
-    sources = [l["source"] for l in param["layers"] if l["source"][:1] == "$"]
-    # Split the path on separators, hopefully it is properly constructed
-    pathvars = set([s.split("\\")[0].strip("$") for s in sources])
-    for layer in param["layers"]:
-        for placeholder in pathvars:
-            layer.update({"source": layer["source"].replace("$"+placeholder,
-                                                            param[placeholder])})
-        # make sure fieldlists are clean
-        for column in ["fields", "primary_key"]:
-            layer.update({column: arcutil.clean_fieldlist(layer[column])})
-
-    return param
+        download = bcdata.download(url, email)
+        if not download:
+            raise Exception('Failed to create DWDS order')
+        shutil.copytree(download, os.path.join(dl_path, gdb))
+        return os.path.join(dl_path, gdb)
 
 
-def get_source_data(param):
+def tiled_sql_sfcgal(sql, tile):
+    """Create an sfcgal enabled connection and execute query for specified tile
     """
-    Extract and cut inputs with specified grid
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db.execute('SET postgis.backend = sfcgal')
+    db.execute(sql, (tile,))
 
-    Since road data isn't too dense (compared to VRI anyway), we can just use
-    the intersect tool for entire layers and do this in-memory
+
+def tiled_sql_geos(sql, tile):
+    """Create an sfcgal enabled connection and execute query for specified tile
     """
-    wksp = param["src_wksp"]
-    click.echo("Extracting, tiling and indexing source data")
-    for layer in param["layers"]:
-        if not arcpy.Exists(os.path.join(wksp, layer["alias"])):
-            click.echo(" - "+os.path.split(layer["source"])[1])
-            # define fields to pull
-            fields = layer["fields"]
-            if not layer["create_key"]:
-                fields = layer["primary_key"]+fields
-            if layer["tile_column"]:
-                fields = fields + [layer["tile_column"]]
-            fieldlist = ",".join(fields)
-            # copy input layer
-            arcutil.copy_data(layer["source"],
-                              os.path.join(wksp, layer["alias"]),
-                              layer["query"],
-                              fieldList=fieldlist)
-            # make sure any existing tile column is standard
-            if layer["tile_column"] and layer["tile_column"] != param["tile_column"]:
-                arcpy.AddField_management(os.path.join(wksp,
-                                                       layer["alias"]),
-                                          param["tile_column"],
-                                          "TEXT", "", "", "32")
-                arcutil.remap(os.path.join(wksp, layer["alias"]),
-                              {param["tile_column"] : "!"+layer["tile_column"]+"!"})
-                arcpy.AddIndex_management(os.path.join(wksp,
-                                                       layer["alias"]),
-                                          param["tile_column"],
-                                          layer["alias"]+'map_tile_idx')
-            # add date and source
-            arcpy.AddField_management(os.path.join(wksp, layer["alias"]),
-                                      "BCGW_SOURCE", "TEXT", "", "", "255")
-            arcpy.AddField_management(os.path.join(wksp, layer["alias"]),
-                                      "BCGW_EXTRACTION_DATE",
-                                      "TEXT", "", "", "255")
-            arcutil.remap(os.path.join(wksp, layer["alias"]),
-                          {"BCGW_EXTRACTION_DATE": date.today().isoformat()})
-            if layer["noted_source"]:
-                bcgw_source = os.path.split(layer["noted_source"])[1]
-            else:
-                bcgw_source = os.path.split(layer["source"])[1]
-            arcutil.remap(os.path.join(wksp, layer["alias"]),
-                          {"BCGW_SOURCE": bcgw_source})
-            # add new primary key if so noted
-            # the new key is just a copy of the objectid, added so that it
-            # gets retained in subsequent operations
-            if layer["create_key"]:
-                arcutil.add_unique_id(os.path.join(wksp, layer["alias"]),
-                                      layer["primary_key"][0])
-            # repair geom
-            arcpy.RepairGeometry_management(os.path.join(wksp, layer["alias"]))
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db.execute('SET postgis.backend = geos')
+    db.execute(sql, (tile,))
 
 
-def process(param, tile):
+def add_meta_columns(db, source):
+    """ Add and populate required columns: bcgw_extraction_date, bcgw_source
+    """
+    alias = source['alias']
+    info('adding bcgw source and extraction date columns')
+    for col in ['bcgw_source', 'bcgw_extraction_date']:
+        sql = """ALTER TABLE {t} ADD COLUMN IF NOT EXISTS {c} text
+              """.format(t=alias, c=col)
+        db.execute(sql)
+    sql = """UPDATE {t} SET {c1} = %s, {c2} = %s
+          """.format(t=alias,
+                     c1='bcgw_source',
+                     c2='bcgw_extraction_date')
+    db.execute(sql, (source['source_table'], date.today().isoformat()))
+
+
+def tile(source, n_processes):
+    """Tile input road table
+    """
+    alias = source['alias']
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+
+    # move input table to '_src'
+    if alias+'_src' not in db.tables:
+        sql = 'ALTER TABLE {t} RENAME TO {t}_src'.format(t=alias)
+        db.execute(sql)
+
+    # get a list of tiles present in the data
+    # (this takes a little while, so keep the result on hand)
+    if alias+'_tiles' not in db.tables:
+        info(alias+': generating list of tiles')
+        sql = """CREATE TABLE {out} AS
+                 SELECT a.map_tile
+                 FROM tiles_20k a
+                 INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
+                 ORDER BY a.map_tile""".format(src=alias+'_src',
+                                               out=alias+'_tiles')
+        db.execute(sql)
+    tiles = [t for t in db[alias+'_tiles'].distinct('map_tile')]
+
+    # create empty output table
+    db[alias].drop()
+    fields = source['primary_key']+','+source['fields'].lower()
+    db.execute("""CREATE TABLE {t} AS
+                  SELECT {f},
+                  ''::text as map_tile,
+                  geom
+                  FROM {src}
+                  LIMIT 0
+               """.format(t=alias,
+                          f=fields,
+                          src=alias+'_src'))
+
+    lookup = {'src_table': alias+'_src',
+              'out_table': alias,
+              'fields': fields}
+    sql = db.build_query(db.queries['tile_roads'], lookup)
+
+    # tile, clean
+    info(alias+': tiling and cleaning')
+    func = partial(tiled_sql_geos, sql)
+    pool = multiprocessing.Pool(processes=n_processes)
+    results_iter = pool.imap_unordered(func, tiles)
+    with click.progressbar(results_iter, length=len(tiles)) as bar:
+        for _ in bar:
+            pass
+    pool.close()
+    pool.join()
+
+
+def integrate(sources, tile):
     """
     For given tile:
-      - load road data from each noted source
-      - shift lower priority roads within specified tolerance of higher priority
+      - load road data from each source
+      - shift low priority roads within specified tolerance of higher priority
         roads to match position of higher priority roads
       - remove duplicate roads from lower priority source
       - merge all road sources into single layer
     """
-    outfc = os.path.join(param["tiledir"], "temp_"+tile+".gdb", "roads_"+tile)
-    if not arcpy.Exists(outfc):
+    src_wksp = os.path.join(CONFIG['temp_data'], 'sources.gdb')
+    tile_wksp = os.path.join(CONFIG['temp_data'], 'tiles')
+    make_sure_path_exists(tile_wksp)
+    out_fc = os.path.join(tile_wksp, 'temp_'+tile+'.gdb', 'roads_'+tile)
+    if not arcpy.Exists(out_fc):
         start_time = time.time()
         # create tile workspace
-        tile_wksp = arcutil.create_wksp(param["tiledir"], "temp_"+tile+".gdb")
+        tile_wksp = arcutil.create_wksp(tile_wksp, 'temp_'+tile+'.gdb')
         # try and do all work in memory
-        arcpy.env.workspace = "in_memory"
-
-        # create a clip layer from grid
-        tile_layer = "tile_"+tile+"_lyr"
-        tile_query = param["tile_column"]+" LIKE '"+tile+"%'"
-        arcpy.MakeFeatureLayer_management(os.path.join(param["src_wksp"], "grid"),
-                                          tile_layer,
-                                          tile_query)
+        arcpy.env.workspace = 'in_memory'
         # get data for each source layer within given tile
-        for layer in param["layers"]:
-            src_layer = os.path.join(param["src_wksp"], layer["alias"])
-            mem_layer = layer["alias"]+"_"+tile
-            fieldlist = ",".join(layer["primary_key"]+
-                                 layer["fields"]+
-                                 ["BCGW_SOURCE", "BCGW_EXTRACTION_DATE"])
-            # if layer is pre-tiled, simply query it on the tile column
-            if param["tile_column"] in [f.name for f in arcpy.ListFields(src_layer)]:
-                arcutil.copy_data(src_layer, mem_layer, tile_query, fieldlist)
-            # otherwise do a spatial query and clip
-            else:
-                ftr_layer = layer["alias"]+"_"+tile+"_lyr"
-                fieldinfo = arcutil.pull_items(src_layer, fieldlist)
-                arcpy.MakeFeatureLayer_management(src_layer, ftr_layer,
-                                                  "", "", fieldinfo)
-                arcpy.SelectLayerByLocation_management(ftr_layer, "INTERSECT",
-                                                       tile_layer)
-                arcpy.Clip_analysis(ftr_layer, tile_layer, mem_layer)
-                # cleanup
-                arcpy.Delete_management(ftr_layer)
+        for layer in sources:
+            src_layer = os.path.join(src_wksp, layer['alias'])
+            mem_layer = layer['alias']+'_'+tile
+            tile_query = CONFIG['tile_column']+" LIKE '"+tile+"%'"
+            arcutil.copy_data(src_layer, mem_layer, tile_query)
 
-            # repair geom slows things down but we want to be tidy
-            arcpy.RepairGeometry_management(mem_layer)
-
-        # use only layers that actually have data
+        # use only layers that actually have data for the tile
         roads = []
-        for layer in param["layers"]:
-            mem_layer = layer["alias"]+"_"+tile
+        for layer in sources:
+            mem_layer = layer['alias']+'_'+tile
             if arcutil.n_records(mem_layer) > 0:
                 roads = roads + [mem_layer]
 
         # only run the integrate / erase etc if there is more than one road source
         if len(roads) > 1:
             # regenerate priority numbers, in case empty layers have been removed
-            integrate_str = ";".join([r+" "+str(i+1) for i,r in enumerate(roads)])
+            integrate_str = ';'.join([r+' '+str(i+1) for i,r in enumerate(roads)])
             # perform integrate, modifing extracted road data in place,
             # snapping roads within tolerance
-            arcpy.Integrate_management(integrate_str, param["tolerance"])
+            arcpy.Integrate_management(integrate_str, CONFIG['tolerance'])
             # start with the roads of top priority,
             in_layer = roads[0]
             # then loop through the rest of the roads
             for i in range(1, len(roads)):
-                out_layer = "temp_"+tile+"_"+str(i)
+                out_layer = 'temp_'+tile+'_'+str(i)
                 # erase first layer or previous output with next roads layer
                 arcpy.Erase_analysis(roads[i],
                                      in_layer,
-                                     "temp_missing_roads_"+tile,
-                                     "0.01 Meters")
+                                     'temp_missing_roads_'+tile,
+                                     '0.01 Meters')
                 # merge the output missing roads with the previous input
                 arcpy.Merge_management(["temp_missing_roads_"+tile, in_layer],
                                        out_layer)
@@ -267,58 +251,219 @@ def process(param, tile):
             for i in range(1, len(roads)):
                 arcpy.Delete_management("temp_"+tile+"_"+str(i))
 
+        # append single road source to output
         elif len(roads) == 1:
-            # append single road source to output
             arcutil.copy_data(roads[0], os.path.join(tile_wksp, "roads_"+tile))
-            #arcutil.copy_data(roads[0], "roads_"+tile)
 
+        # if there aren't any roads, don't do anything
         elif len(roads) == 0:
-            # if there aren't any roads, don't do anything
             click.echo('No roads present in tile '+tile)
 
         # cleanup
-        #for fc in arcpy.ListFeatureClasses():
-        #    arcpy.Delete_management(fc)
-        for layer in param["layers"]:
+        for layer in sources:
             if arcpy.Exists(layer["alias"]+"_"+tile):
                 arcpy.Delete_management(layer["alias"]+"_"+tile)
-        arcpy.Delete_management(tile_layer)
         elapsed_time = time.time() - start_time
         click.echo("Completed "+tile+": "+str(elapsed_time))
 
 
-# define commands
+def roadpoly2line(source, n_processes):
+    """Translate road polygon boundaries into road-like lines
+    """
+    alias = source['alias']
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+
+    # move input table to '_src'
+    if alias+'_src' not in db.tables:
+        sql = 'ALTER TABLE {t} RENAME TO {t}_src'.format(t=alias)
+        db.execute(sql)
+
+    # create filter_rings function
+    db.execute(db.queries['filter_rings'])
+
+    # get a list of tiles present in the data
+    # (this takes a little while, so keep the result on hand)
+    if alias+'_tiles' not in db.tables:
+        info(alias+': generating list of tiles')
+        sql = """CREATE TABLE {out} AS
+                 SELECT a.map_tile
+                 FROM tiles_20k a
+                 INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
+                 ORDER BY a.map_tile""".format(src=alias+'_src',
+                                               out=alias+'_tiled')
+        db.execute(sql)
+    tiles = [t for t in db[alias+'_tiles'].distinct('map_tile')]
+
+    # create tiled/cleaned layer
+    if alias+'_cleaned' not in db.tables:
+        db.execute("""CREATE TABLE {t}
+                    ({t}_id SERIAL PRIMARY KEY,
+                     map_tile text,
+                     geom geometry)""".format(t=alias+'_cleaned'))
+
+        lookup = {'src_table': alias+'_src',
+                  'out_table': alias+'_cleaned'}
+        sql = db.build_query(db.queries['results_tile_clean'], lookup)
+
+        # tile and clean using GEOS backend
+        info(alias+': tiling and cleaning')
+        func = partial(tiled_sql_geos, sql)
+        pool = multiprocessing.Pool(processes=n_processes)
+        results_iter = pool.imap_unordered(func, tiles)
+        with click.progressbar(results_iter, length=len(tiles)) as bar:
+            for _ in bar:
+                pass
+        pool.close()
+        pool.join()
+
+    # create output layer
+    db.execute("""CREATE TABLE {t}
+                    ({t}_id SERIAL PRIMARY KEY,
+                     map_tile text,
+                     geom geometry)""".format(t=alias))
+
+    lookup = {'src_table': alias+'_cleaned',
+              'out_table': alias}
+    sql = db.build_query(db.queries['roadpoly2line'], lookup)
+    # process poly2line using SFCGAL backend
+    info(alias+': generating road lines from polygons')
+    func = partial(tiled_sql_sfcgal, sql)
+    pool = multiprocessing.Pool(processes=n_processes)
+    results_iter = pool.imap_unordered(func, tiles)
+    with click.progressbar(results_iter, length=len(tiles)) as bar:
+        for _ in bar:
+            pass
+    pool.close()
+    pool.join()
+
+
 @click.group()
 def cli():
     pass
 
 
 @cli.command()
-@click.option("--layers", "-l",
-              help='Comma separated list of layers to extract')
-def extract(layers):
+def create_db():
+    """Create a fresh database
     """
-    Extract and tile required source layers
-    """
-    param = setup(layers)
-    get_source_data(param)
+    pgdb.create_db(CONFIG['db_url'])
+    db = pgdb.connect(CONFIG['db_url'])
+    db.execute('CREATE EXTENSION postgis')
+    db.execute('CREATE EXTENSION postgis_sfcgal')
+    db.execute('CREATE EXTENSION lostgis')
 
 
 @cli.command()
+@click.option('--source_csv', '-s', default=CONFIG['source_csv'],
+              type=click.Path(exists=True), help=HELP['csv'])
+@click.option('--email', help=HELP['email'])
+@click.option('--dl_path', default=CONFIG['source_data'],
+              type=click.Path(exists=True), help=HELP['dl_path'])
+@click.option('--alias', '-a', help=HELP['alias'])
+@click.option('--force_refresh', is_flag=True, default=False,
+              help='Force re-download')
+def load(source_csv, email, dl_path, alias, force_refresh):
+    """Download data, load to postgres
+    """
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    sources = read_csv(source_csv)
+    # filter sources based on optional provided alias
+    if alias:
+        sources = [s for s in sources if s['alias'] == alias]
+
+    # process sources where automated downloads are avaiable
+    for source in sources:
+        # manual downloads:
+        # - must be placed in dl_path folder
+        # - file must be .gdb with same name as alias specified in sources csv
+        if source['manual_download'] == 'T':
+            info('Loading %s from manual download' % source['alias'])
+            file = os.path.join(dl_path, alias+'.gdb')
+        else:
+            info('Downloading %s' % source['alias'])
+            # handle BCGW downloads
+            if urlparse(source['url']).hostname == 'catalogue.data.gov.bc.ca':
+                file = download_bcgw(source['url'], dl_path, email=email,
+                                     force_refresh=force_refresh)
+                info('%s downloaded to %s' % source[alias], file)
+
+            # handle all other downloads
+            else:
+                raise Exception('Only DataBC Catalogue downloads are supported')
+
+        # load downloaded data to postgres
+        if source['alias'] not in db.tables or force_refresh:
+            db.ogr2pg(file,
+                      in_layer=source['layer_in_file'],
+                      out_layer=source['alias'],
+                      sql=source['query'])
+
+    # process sources where automated downloads are not avaiable
+    for source in [s for s in sources if s['manual_download'] == 'T']:
+        if source['alias'] not in db.tables or force_refresh:
+            db.ogr2pg(file,
+                      in_layer=source['layer_in_file'],
+                      out_layer=source['alias'],
+                      sql=source['query'])
+
+
+@cli.command()
+@click.option('--source_csv', '-s', default=CONFIG['source_csv'],
+              type=click.Path(exists=True), help=HELP['csv'])
+@click.option('--alias', '-a', help=HELP['alias'])
+@click.option('--n_processes', '-p', default=multiprocessing.cpu_count() - 1,
+              help="Number of parallel processing threads to utilize")
+def preprocess(source_csv, alias, n_processes):
+    """Prepare input road data
+    """
+    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    sources = read_csv(source_csv)
+    if alias:
+        sources = [s for s in sources if s['alias'] == alias]
+    # find sources noted for preprocessing
+    sources = [s for s in sources if s['preprocess_operation']]
+    for source in sources:
+        info('Preprocessing %s' % source['alias'])
+        # call noted preprocessing function
+        function = source['preprocess_operation']
+        globals()[function](source, n_processes)
+        # add required extraction date and source layer columns
+        add_meta_columns(db, source)
+        # dump data to .gdb for subsequent arcpy processing
+        # (query layers pointing to postgres in arcgis should work fine, but
+        # this allows us to use existing code)
+        db.pg2ogr('SELECT * FROM {t}'.format(t=source['alias']),
+                  'FileGDB',
+                  os.path.join(CONFIG['temp_data'], 'sources.gdb'),
+                  source['alias'],
+                  geom_type='MULTILINESTRING')
+
+
+@cli.command()
+@click.option('--source_csv', '-s', default=CONFIG['source_csv'],
+              type=click.Path(exists=True), help=HELP['csv'])
+@click.option('--n_processes', '-p', default=multiprocessing.cpu_count() - 1,
+              help="Number of parallel processing threads to utilize")
 @click.option("--tiles", "-t",
               help='Comma separated list of tiles to process')
-def integrate(tiles):
-    """
-    Run road integration
+def process(source_csv, n_processes, tiles):
+    """ Process road integration
     """
     start_time = time.time()
-    param = setup(None, tiles)
-
+    if not tiles:
+        db = pgdb.connect(CONFIG['db_url'], schema='public')
+        tiles = get_250k_tiles(db)
+    else:
+        tiles = tiles.split(',')
+    sources = read_csv(source_csv)
+    # only use a source layer if it has a priority value
+    sources = [s for s in sources if s['priority'] != 0]
     # split processing between multiple processes
     # n processes is equal to processess parmeter in config
-    func = partial(process, param)
-    pool = Pool(processes=param["processes"])
-    pool.map(func, param["tiles"])
+    click.echo("Processing tiles")
+    func = partial(integrate, sources)
+    pool = multiprocessing.Pool(processes=n_processes)
+    pool.map(func, tiles)
     pool.close()
     pool.join()
 
@@ -327,12 +472,12 @@ def integrate(tiles):
     click.echo("Merging tiles to output...")
     # merge outputs to single output layer
     outputs = []
-    for t in param["tiles"]:
-        fc = os.path.join(param["tiledir"], "temp_"+t+".gdb", "roads_"+t)
+    for t in tiles:
+        fc = os.path.join(CONFIG['temp_dir'], 'tiles', 'temp_'+t+'.gdb', 'roads_'+t)
         if arcpy.Exists(fc):
             outputs = outputs + [fc]
-    arcpy.Merge_management(outputs, os.path.join(param["out_wksp"], param["output"]))
-    click.echo("Output ready in : "+os.path.join(param["out_wksp"], param["output"]))
+    arcpy.Merge_management(outputs, CONFIG['output'])
+    click.echo('Output ready in : ' + CONFIG['output'])
 
 if __name__ == '__main__':
     cli()

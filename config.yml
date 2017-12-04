@@ -1,36 +1,11 @@
-# -----------------
-# input definitions
-# -----------------
-datalist: road_inputs.csv               # file containing list of source layers
-tilelist: tiles.csv                     # file containing list of tiles to process
-grid: WHSE_BASEMAPPING.BCGS_20K_GRID    # BCGW tile layer with which to slice and dice
-                                        # (note that the 20k grid is fine for 250k queries)
-tile_column: MAP_TILE                   # tile field in tile layer
-
-# -----------------
-# integrate snapping tolerance default
-# -----------------
-tolerance: 7
-
-# -----------------
-# output feature class name
-# -----------------
-output: integrated_roads
-
-# -----------------
-# path lookups
-# Define path shortcuts used in datalist.csv other than $BCGW and $TMP here
-# for example:
-# $DSSWHSE: Q:\\dsswhse
-# -----------------
-
-# -----------------
-# misc config settings
-# -----------------
-processes: 10                            # how many cores to use
-tmpdir: roadintegrator                   # folder to create and write to on T
-
-# -----------------
-# if your BCGW user name is different from your IDIR name, set here (and uncomment)
-# -----------------
-# BCGW_USR: username
+# Edit processing configuration here
+source_data: source_data                # path to folder for holding downloads
+temp_data: temp_data                    # path to folder for temp .gdb files
+source_csv: sources.csv                 # file containing list of source layers
+tolerance: 7                            # integrate tolerance (m)
+grid: tiles_20k                         # alias of tile layer in datalist
+tile_column: map_tile                   # tile name field in tile layer
+# path to output gdb and feature class
+output: integrated_roads.gdb/integrated_roads
+# postgresql db SQLAlchemy connection string
+db_url: postgresql://postgres:postgres@localhost:5432/roadintegrator
