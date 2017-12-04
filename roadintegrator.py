@@ -473,7 +473,7 @@ def process(source_csv, n_processes, tiles):
     # merge outputs to single output layer
     outputs = []
     for t in tiles:
-        fc = os.path.join(CONFIG['temp_dir'], 'tiles', 'temp_'+t+'.gdb', 'roads_'+t)
+        fc = os.path.join(CONFIG['temp_data'], 'tiles', 'temp_'+t+'.gdb', 'roads_'+t)
         if arcpy.Exists(fc):
             outputs = outputs + [fc]
     arcpy.Merge_management(outputs, CONFIG['output'])
