@@ -8,12 +8,11 @@ Note that the road merging process is an approximation - the output should not b
 
 - Python 2.7
 - ArcGIS Desktop (with Advanced License, tested with v10.1)
-- ArcGIS 64 bit background geoprocessing add-on
 - GDAL/OGR (tested with v2.2.1)
 - PostgreSQL (tested with v10.1)
 - PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.4)
 
-**NOTE**: as the `integrate` portion of the script requires ArcGIS, it runs only on Windows.
+**NOTE**: as the script requires ArcGIS, it runs only on Windows.
 
 ## Setup
 
@@ -51,19 +50,21 @@ Note that the road merging process is an approximation - the output should not b
 To modify processing tolerances and default database/files/folders, edit `config.yml`. 
 
 ### sources.csv
-To modify the source layers used in the analysis, edit the file referenced as `datalist` in `config.yml`. The default datalist file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **hierarchy** column. Columns are as follows:
+To modify the source layers used in the analysis, edit the file referenced as `source_csv` in `config.yml`. The default source data list file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **hierarchy** column. Columns are as follows:
 
 | COLUMN                 | DESCRIPTION                                                                                                                                                                            | 
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
-| **priority**              | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`. 
+| **manual_download**        | A value of `T` indicates that a direct download url is not available for the data. Download these sources manually to the downloads folder and give the file the same name as the layer's **alias**.
+| **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`. 
 | **name**                   | Full name of the source layer 
 | **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
+|**source_table**            | Full schema.table name of source BCGW table
 |**primary_key**             | The source layer's primary key
 | **fields**                 | The fields in the source layer to retain in the output
 | **url**                    | Download url for the data source
 | **layer_in_file**          | The layer of interest within the downloaded file
 | **query**                  | A SQL query defining the subset of data of interest from the given file/layer (SQLite dialect)
-| **preprocess_operation**   |
+| **preprocess_operation**   | Pre-processing operation to apply to layer (`tile` and `roadpoly2line` are the only supported operations)
 | **license**                | The license under which the data is distrubted
 
 Note that only Province of BC data sources are supported for download.
@@ -74,7 +75,7 @@ Note that only Province of BC data sources are supported for download.
     
         $ python roadintegrator.py load
 
-2. Preprocess RESTULTS roads (generate lines from polygons):
+2. Preprocess (tile inputs and generate lines from RESULTS polygons):
 
         $ python roadintegratory.py preprocess
 
@@ -92,7 +93,7 @@ Note that only Province of BC data sources are supported for download.
 - in PostGIS, preprocess source road layers, creating lines from RESULTS road polyons and tiling all sources
 - dump sources road layers into a single gdb
 - looping through tiles (20k or 250k):
-    + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on input data priorities specified in `sources.csv`
-    + with all linework within the tolerance of `Integrage` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
+    + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on hierarchy specified in `sources.csv`
+    + with all linework within the tolerance of `Integrate` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
     + merge the resulting layers into a single output roads layer for the given tile
 - merge all tiles into a provincial roads layer
