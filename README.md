@@ -2,7 +2,9 @@
 
 Collect various BC road data sources, preprocess and tile, then use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
 
-Note that the road merging process is an approximation - the output should not be considered definitive. Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers.
+Note that the road merging process is an approximation - the output should not be considered definitive. See [output](##output) below for more details.
+
+Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers. 
 
 ## Requirements
 
@@ -97,3 +99,14 @@ Note that only Province of BC data sources are supported for download.
     + with all linework within the tolerance of `Integrate` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
     + merge the resulting layers into a single output roads layer for the given tile
 - merge all tiles into a provincial roads layer
+
+## Output
+As mentioned above, the analysis is very much an approximation. It works best in areas where roads are not duplicated between sources.
+These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance). 
+
+### three input layers
+![inputs](img/roadintegrator_inputs.png)
+
+### resulting output
+![inputs](img/roadintegrator_output.png)
+
