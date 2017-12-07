@@ -2,7 +2,7 @@
 
 Collect various BC road data sources, preprocess and tile, then use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
 
-Note that the road merging process is an approximation - the output should not be considered definitive. See [output](##output) below for more details.
+Note that the road merging process is an approximation - the output should not be considered definitive. See [output](#output) below for more details.
 
 Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers. 
 
