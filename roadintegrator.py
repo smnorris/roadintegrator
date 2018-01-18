@@ -24,12 +24,10 @@ import time
 from urlparse import urlparse
 import yaml
 
-import arcpy
 import click
 
-import arcutil
 import bcdata
-import pgdb
+import pgdata
 
 
 with open('config.yml', 'r') as ymlfile:
@@ -93,7 +91,10 @@ def download_bcgw(url, dl_path, email=None, force_refresh=False):
     if not email:
         raise Exception('An email address is required to download BCGW data')
     # check that the extracted download isn't already in tmp
-    gdb = hashlib.sha224(url).hexdigest()+'.gdb'
+    info = bcdata.info(url)
+    schema, table = (info['schema'], info['name'])
+    #gdb = hashlib.sha224(url).hexdigest()+'.gdb'
+    gdb = schema+'_'+table+'.gdb'
     if os.path.exists(os.path.join(dl_path, gdb)) and not force_refresh:
         return os.path.join(dl_path, gdb)
     else:
@@ -107,7 +108,7 @@ def download_bcgw(url, dl_path, email=None, force_refresh=False):
 def tiled_sql_sfcgal(sql, tile):
     """Create an sfcgal enabled connection and execute query for specified tile
     """
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema='public')
     db.execute('SET postgis.backend = sfcgal')
     db.execute(sql, (tile,))
 
@@ -115,7 +116,7 @@ def tiled_sql_sfcgal(sql, tile):
 def tiled_sql_geos(sql, tile):
     """Create an sfcgal enabled connection and execute query for specified tile
     """
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema='public')
     db.execute('SET postgis.backend = geos')
     db.execute(sql, (tile,))
 
@@ -140,7 +141,7 @@ def tile(source, n_processes):
     """Tile input road table
     """
     alias = source['alias']
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema='public')
 
     # move input table to '_src'
     if alias+'_src' not in db.tables:
@@ -199,6 +200,9 @@ def integrate(sources, tile):
       - remove duplicate roads from lower priority source
       - merge all road sources into single layer
     """
+    import arcpy
+    import arcutil
+
     src_wksp = os.path.join(CONFIG['temp_data'], 'sources.gdb')
     tile_wksp = os.path.join(CONFIG['temp_data'], 'tiles')
     make_sure_path_exists(tile_wksp)
@@ -271,7 +275,7 @@ def roadpoly2line(source, n_processes):
     """Translate road polygon boundaries into road-like lines
     """
     alias = source['alias']
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema='public')
 
     # move input table to '_src'
     if alias+'_src' not in db.tables:
@@ -290,7 +294,7 @@ def roadpoly2line(source, n_processes):
                  FROM tiles_20k a
                  INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
                  ORDER BY a.map_tile""".format(src=alias+'_src',
-                                               out=alias+'_tiled')
+                                               out=alias+'_tiles')
         db.execute(sql)
     tiles = [t for t in db[alias+'_tiles'].distinct('map_tile')]
 
@@ -346,8 +350,8 @@ def cli():
 def create_db():
     """Create a fresh database
     """
-    pgdb.create_db(CONFIG['db_url'])
-    db = pgdb.connect(CONFIG['db_url'])
+    pgdata.create_db(CONFIG['db_url'])
+    db = pgdata.connect(CONFIG['db_url'])
     db.execute('CREATE EXTENSION postgis')
     db.execute('CREATE EXTENSION postgis_sfcgal')
     db.execute('CREATE EXTENSION lostgis')
@@ -365,7 +369,7 @@ def create_db():
 def load(source_csv, email, dl_path, alias, force_refresh):
     """Download data, load to postgres
     """
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema='public')
     sources = read_csv(source_csv)
     # filter sources based on optional provided alias
     if alias:
@@ -378,28 +382,20 @@ def load(source_csv, email, dl_path, alias, force_refresh):
         # - file must be .gdb with same name as alias specified in sources csv
         if source['manual_download'] == 'T':
             info('Loading %s from manual download' % source['alias'])
-            file = os.path.join(dl_path, alias+'.gdb')
+            file = os.path.join(dl_path, source['alias']+'.gdb')
         else:
             info('Downloading %s' % source['alias'])
             # handle BCGW downloads
             if urlparse(source['url']).hostname == 'catalogue.data.gov.bc.ca':
                 file = download_bcgw(source['url'], dl_path, email=email,
                                      force_refresh=force_refresh)
-                info('%s downloaded to %s' % source[alias], file)
+                info('%s downloaded to %s' % (source['alias'], file))
 
             # handle all other downloads
             else:
                 raise Exception('Only DataBC Catalogue downloads are supported')
 
         # load downloaded data to postgres
-        if source['alias'] not in db.tables or force_refresh:
-            db.ogr2pg(file,
-                      in_layer=source['layer_in_file'],
-                      out_layer=source['alias'],
-                      sql=source['query'])
-
-    # process sources where automated downloads are not avaiable
-    for source in [s for s in sources if s['manual_download'] == 'T']:
         if source['alias'] not in db.tables or force_refresh:
             db.ogr2pg(file,
                       in_layer=source['layer_in_file'],
@@ -416,7 +412,7 @@ def load(source_csv, email, dl_path, alias, force_refresh):
 def preprocess(source_csv, alias, n_processes):
     """Prepare input road data
     """
-    db = pgdb.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema='public')
     sources = read_csv(source_csv)
     if alias:
         sources = [s for s in sources if s['alias'] == alias]
@@ -449,9 +445,12 @@ def preprocess(source_csv, alias, n_processes):
 def process(source_csv, n_processes, tiles):
     """ Process road integration
     """
+    import arcpy
+    import arcutil
+
     start_time = time.time()
     if not tiles:
-        db = pgdb.connect(CONFIG['db_url'], schema='public')
+        db = pgdata.connect(CONFIG['db_url'], schema='public')
         tiles = get_250k_tiles(db)
     else:
         tiles = tiles.split(',')

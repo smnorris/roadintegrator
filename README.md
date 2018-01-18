@@ -73,19 +73,24 @@ Note that only Province of BC data sources are supported for download.
 
 ## Usage
 
-1. Download and consolidate all required data:
+1. Create the postgres database if it doesn't already exist
+        $ python roadintegrator.py create_db
+
+2. Manually download datsets that are not available via the download service. As noted above, download these to the `source_data` folder noted in `config.yml` and give the .gdb file the same name as the layer's alias. 
+
+3. Download and consolidate all required data:
     
         $ python roadintegrator.py load
 
-2. Preprocess (tile inputs and generate lines from RESULTS polygons):
+3. Preprocess (tile inputs and generate lines from RESULTS polygons):
 
         $ python roadintegratory.py preprocess
 
-3. Run the road integration:
+4. Run the road integration:
 
         $ python roadintegrator.py process
 
-4. When processing is complete, find output layer in `output` gdb specified in `config.yml`
+5. When processing is complete, find output layer in `output` gdb specified in `config.yml`
 
 
 ## Methodology
