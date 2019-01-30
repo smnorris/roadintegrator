@@ -257,7 +257,6 @@ def create_db():
     db = pgdata.connect(CONFIG['db_url'])
     db.execute('CREATE EXTENSION postgis')
     db.execute('CREATE EXTENSION postgis_sfcgal')
-    db.execute('CREATE EXTENSION lostgis')
 
 
 @cli.command()
