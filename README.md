@@ -13,17 +13,20 @@ the individual source road layers.
 
 ## Requirements
 
-For data prep:
+Two scripts are provided, each has different requirements:
 
-- Python 3 (for data prep script)
+For `1_prep.py`:
+
+- Python 3 (tested with v3.7)
 - GDAL/OGR (tested with v2.4.0)
 - PostgreSQL (tested with v10.6)
 - PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5)
 
-For integrate command:
+For `2_integrate.py`:
 
-- Python 2 (for ArcGIS script)
 - ArcGIS Desktop (tested with v10.6)
+- Python 2
+
 
 ## Setup
 
@@ -38,9 +41,9 @@ create virtualenv, install Python dependencies:
 
 2. On ArcGIS machine, clone the repositiory and install dependencies:
 
-        $ git clone https://github.com/bcgov/roadintegrator.git
-        $ pip install --user click
-        $ pip install --user pyaml
+        C:\path\to\project> git clone https://github.com/smnorris/roadintegrator.git
+        C:\path\to\project> pip install --user click
+        C:\path\to\project> pip install --user pyaml
 
 
 ## Configuration
@@ -81,9 +84,25 @@ Note that this tool only supports downloading sources available through the Data
 
 4. Copy prepped data to a machine with ArcGIS, run the road integration:
 
-        $ python 2_integrate.py
+        C:\path\to\project> python 2_integrate.py
 
-5. When processing is complete, find output layer in `output` gdb specified in `config.yml`
+See `--help` for each command to view available options. For example:
+
+```
+$ python 1_prep.py load --help
+Usage: 1_prep.py load [OPTIONS]
+
+  Download data, load to postgres
+
+Options:
+  -s, --source_csv PATH  Path to csv that lists all input data sources
+  -a, --alias TEXT       The 'alias' key identifing the source of interest,
+                         from source csv
+  --force_refresh        Force re-download
+  --help                 Show this message and exit.
+```
+
+When processing is complete, find output layer in `output` gdb specified in `config.yml`
 
 
 ## Methodology
