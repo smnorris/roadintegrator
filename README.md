@@ -14,28 +14,22 @@ Output is for Cumulative Effects reporting tools and similar road density analys
 - PostgreSQL (tested with v10.6)
 - PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5)
 
-**NOTE**: as the script requires ArcGIS, it runs only on Windows.
-
 ## Setup
 
-1. Ensure that Python 2.7 64 bit (and scripts) bundled with ArcGIS are available at the command prompt. Either check your PATH Environment variable via the Control Panel or open a 64 bit command prompt window and modify the PATH directly like this (modify the path based on your ArcGIS install path):
+1. Ensure pip is installed, [install]((https://pip.pypa.io/en/stable/installing/)) if it is not.
 
-        set PATH="E:\sw_nt\Python27\ArcGISx6410.3";"E:\sw_nt\Python27\ArcGISx6410.3\Scripts";%PATH%
-
-2. Ensure pip is installed, [install]((https://pip.pypa.io/en/stable/installing/)) if it is not.
-
-3. (Optional) Consider installing dependencies to a virtual environment rather than to the system Python or your home directory:
+2. (Optional) Consider installing dependencies to a virtual environment rather than to the system Python or your home directory:
 
          $ pip install virtualenv                   # if not already installed
          $ mkdir roadintegrator_venv
          $ virtualenv roadintegrator_venv
          $ roadintegrator_venv\Scripts\activate     # activate the env
 
-4. Clone the repository:
+3. Clone the repository:
 
         git clone https://github.com/bcgov/roadintegrator.git
 
-5. Using pip, install the required Python libraries:
+4. Using pip, install the required Python libraries:
 
         cd roadintegrator
         pip install --user -r requirements.txt
@@ -51,20 +45,17 @@ To modify the source layers used in the analysis, edit the file referenced as `s
 
 | COLUMN                 | DESCRIPTION                                                                                                                                                                            |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **manual_download**        | A value of `T` indicates that a direct download url is not available for the data. Download these sources manually to the downloads folder and give the file the same name as the layer's **alias**.
 | **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`.
 | **name**                   | Full name of the source layer
 | **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
-|**source_table**            | Full schema.table name of source BCGW table
-|**primary_key**             | The source layer's primary key
+| **source_table**           | Full schema.table name of source BCGW table
+| **primary_key**            | The source layer's primary key
 | **fields**                 | The fields in the source layer to retain in the output
 | **url**                    | Download url for the data source
-| **layer_in_file**          | The layer of interest within the downloaded file
 | **query**                  | A SQL query defining the subset of data of interest from the given file/layer (SQLite dialect)
 | **preprocess_operation**   | Pre-processing operation to apply to layer (`tile` and `roadpoly2line` are the only supported operations)
-| **license**                | The license under which the data is distrubted
 
-Note that only Province of BC data sources are supported for download.
+Note that this tool only supports downloading sources available through the DataBC Catalogue.
 
 ## Usage
 
@@ -72,9 +63,7 @@ Note that only Province of BC data sources are supported for download.
 
         $ python roadintegrator.py create-db
 
-2. Manually download datsets that are not available via the download service. As noted above, download these to the `source_data` folder noted in `config.yml` and give the .gdb file the same name as the layer's alias.
-
-3. Download and consolidate all required data:
+2. Download and consolidate all required data:
 
         $ python roadintegrator.py load
 
@@ -82,7 +71,7 @@ Note that only Province of BC data sources are supported for download.
 
         $ python roadintegrator.py preprocess
 
-4. On a machine with ArcGIS, run the road integration:
+4. Run the road integration:
 
         $ python roadintegrator.py process
 
