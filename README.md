@@ -39,11 +39,12 @@ create virtualenv, install Python dependencies:
         $ venv\Scripts\activate
         $ pip install -r requirements.txt
 
-2. On ArcGIS machine, clone the repositiory and install dependencies:
+2. On ArcGIS machine, clone the repositiory, install dependencies, and ensure that we are using the 64bit Python:
 
         C:\path\to\project> git clone https://github.com/smnorris/roadintegrator.git
         C:\path\to\project> pip install --user click
         C:\path\to\project> pip install --user pyaml
+        C:\path\to\project> SET PATH="E:\sw_nt\Python27\ArcGISx6410.6";"E:\sw_nt\Python27\ArcGISx6410.6\Scripts";%PATH%
 
 
 ## Configuration
