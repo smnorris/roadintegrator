@@ -82,7 +82,8 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py preprocess
 
-4. Copy prepped data to a machine with ArcGIS, run the road integration:
+4. First, copy the prepped data (the .gdb in folder noted as `temp_data` in `config.yml`)
+to ArcGIS machine, then run the road integration:
 
         C:\path\to\project> python 2_integrate.py
 

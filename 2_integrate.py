@@ -284,11 +284,11 @@ def process(source_csv, n_processes, tiles):
         fc = os.path.join(CONFIG['temp_data'], 'tiles', 'temp_'+t+'.gdb', 'roads_'+t)
         if arcpy.Exists(fc):
             outputs = outputs + [fc]
-    gdb, fc = os.path.split(CONFIG['output'])
-    gdb_path, gdb = os.path.split(gdb)
-    create_wksp(gdb_path, gdb)
-    arcpy.Merge_management(outputs, CONFIG['output'])
-    click.echo('Output ready in : ' + CONFIG['output'])
+    gdb = "integrated_roads.gdb"
+    fc = "integrated_roads"
+    out_gdb = create_wksp(os.getcwd(), gdb)
+    arcpy.Merge_management(outputs, os.path.join(out_gdb, fc))
+    click.echo('Output ready in : ' + gdb)
 
 
 if __name__ == '__main__':
