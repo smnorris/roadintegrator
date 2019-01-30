@@ -207,31 +207,34 @@ def integrate(sources, tile):
 
         # only run the integrate / erase etc if there is more than one road source
         if len(roads) > 1:
-            # regenerate priority numbers, in case empty layers have been removed
-            integrate_str = ';'.join([r+' '+str(i+1) for i,r in enumerate(roads)])
-            # perform integrate, modifing extracted road data in place,
-            # snapping roads within tolerance
-            arcpy.Integrate_management(integrate_str, CONFIG['tolerance'])
-            # start with the roads of top priority,
-            in_layer = roads[0]
-            # then loop through the rest of the roads
-            for i in range(1, len(roads)):
-                out_layer = 'temp_'+tile+'_'+str(i)
-                # erase first layer or previous output with next roads layer
-                arcpy.Erase_analysis(roads[i],
-                                     in_layer,
-                                     'temp_missing_roads_'+tile,
-                                     '0.01 Meters')
-                # merge the output missing roads with the previous input
-                arcpy.Merge_management(["temp_missing_roads_"+tile, in_layer],
-                                       out_layer)
-                arcpy.Delete_management("temp_missing_roads_"+tile)
-                in_layer = out_layer
-            # write to output gdb
-            copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
-            # delete temp layers
-            for i in range(1, len(roads)):
-                arcpy.Delete_management("temp_"+tile+"_"+str(i))
+            try:
+                # regenerate priority numbers, in case empty layers have been removed
+                integrate_str = ';'.join([r+' '+str(i+1) for i,r in enumerate(roads)])
+                # perform integrate, modifing extracted road data in place,
+                # snapping roads within tolerance
+                arcpy.Integrate_management(integrate_str, CONFIG['tolerance'])
+                # start with the roads of top priority,
+                in_layer = roads[0]
+                # then loop through the rest of the roads
+                for i in range(1, len(roads)):
+                    out_layer = 'temp_'+tile+'_'+str(i)
+                    # erase first layer or previous output with next roads layer
+                    arcpy.Erase_analysis(roads[i],
+                                         in_layer,
+                                         'temp_missing_roads_'+tile,
+                                         '0.01 Meters')
+                    # merge the output missing roads with the previous input
+                    arcpy.Merge_management(["temp_missing_roads_"+tile, in_layer],
+                                           out_layer)
+                    arcpy.Delete_management("temp_missing_roads_"+tile)
+                    in_layer = out_layer
+                # write to output gdb
+                copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
+                # delete temp layers
+                for i in range(1, len(roads)):
+                    arcpy.Delete_management("temp_"+tile+"_"+str(i))
+            except:
+                raise RuntimeError("Tile {} failed".format(tile))
 
         # append single road source to output
         elif len(roads) == 1:
