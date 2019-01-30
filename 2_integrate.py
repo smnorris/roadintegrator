@@ -188,7 +188,7 @@ def integrate(sources, tile):
     if not arcpy.Exists(out_fc):
         start_time = time.time()
         # create tile workspace
-        tile_wksp = arcutil.create_wksp(tile_wksp, 'temp_'+tile+'.gdb')
+        tile_wksp = create_wksp(tile_wksp, 'temp_'+tile+'.gdb')
         # try and do all work in memory
         arcpy.env.workspace = 'in_memory'
         # get data for each source layer within given tile
@@ -196,13 +196,13 @@ def integrate(sources, tile):
             src_layer = os.path.join(src_wksp, layer['alias'])
             mem_layer = layer['alias']+'_'+tile
             tile_query = CONFIG['tile_column']+" LIKE '"+tile+"%'"
-            arcutil.copy_data(src_layer, mem_layer, tile_query)
+            copy_data(src_layer, mem_layer, tile_query)
 
         # use only layers that actually have data for the tile
         roads = []
         for layer in sources:
             mem_layer = layer['alias']+'_'+tile
-            if arcutil.n_records(mem_layer) > 0:
+            if n_records(mem_layer) > 0:
                 roads = roads + [mem_layer]
 
         # only run the integrate / erase etc if there is more than one road source
@@ -228,14 +228,14 @@ def integrate(sources, tile):
                 arcpy.Delete_management("temp_missing_roads_"+tile)
                 in_layer = out_layer
             # write to output gdb
-            arcutil.copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
+            copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
             # delete temp layers
             for i in range(1, len(roads)):
                 arcpy.Delete_management("temp_"+tile+"_"+str(i))
 
         # append single road source to output
         elif len(roads) == 1:
-            arcutil.copy_data(roads[0], os.path.join(tile_wksp, "roads_"+tile))
+            copy_data(roads[0], os.path.join(tile_wksp, "roads_"+tile))
 
         # if there aren't any roads, don't do anything
         elif len(roads) == 0:
@@ -260,8 +260,6 @@ def integrate(sources, tile):
 def process(source_csv, n_processes, tiles):
     """ Process road integration
     """
-    import arcpy
-    import arcutil
 
     start_time = time.time()
     tiles = tiles.split(',')
@@ -288,7 +286,7 @@ def process(source_csv, n_processes, tiles):
             outputs = outputs + [fc]
     gdb, fc = os.path.split(CONFIG['output'])
     gdb_path, gdb = os.path.split(gdb)
-    arcutil.create_wksp(gdb_path, gdb)
+    create_wksp(gdb_path, gdb)
     arcpy.Merge_management(outputs, CONFIG['output'])
     click.echo('Output ready in : ' + CONFIG['output'])
 
