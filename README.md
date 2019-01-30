@@ -36,10 +36,11 @@ create virtualenv, install Python dependencies:
         $ venv\Scripts\activate
         $ pip install -r requirements.txt
 
-2. On ArcGIS machine, clone the repositiory and install the one extra dependency, `click`
+2. On ArcGIS machine, clone the repositiory and install dependencies:
 
         $ git clone https://github.com/bcgov/roadintegrator.git
         $ pip install --user click
+        $ pip install --user pyaml
 
 
 ## Configuration
