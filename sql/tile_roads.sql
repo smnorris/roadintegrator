@@ -23,7 +23,7 @@ SELECT * FROM
     $fields,
     b.map_tile,
     CASE
-      WHEN ST_CoveredBy(a.geom, b.geom) THEN a.geom
+      WHEN ST_CoveredBy(a.geom, b.geom) THEN ST_Multi(a.geom)
       ELSE  ST_Multi(
                ST_CollectionExtract(
                  ST_Safe_Intersection(a.geom, b.geom),

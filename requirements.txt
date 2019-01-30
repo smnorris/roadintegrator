@@ -1,5 +1,4 @@
 pyaml
-pgxnclient
 Click
 pgdata
 bcdata

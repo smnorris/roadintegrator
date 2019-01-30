@@ -4,15 +4,15 @@ Collect various BC road data sources, preprocess and tile, then use the ArcGIS [
 
 Note that the road merging process is an approximation - the output should not be considered definitive. See [output](#output) below for more details.
 
-Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers. 
+Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers.
 
 ## Requirements
 
-- Python 2.7
-- ArcGIS Desktop (with Advanced License, tested with v10.1)
-- GDAL/OGR (tested with v2.2.1)
-- PostgreSQL (tested with v10.1)
-- PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.4)
+- Python 3
+- ArcGIS Desktop (with Advanced License, tested with ArcGIS Pro v2.2)
+- GDAL/OGR (tested with v2.4.0)
+- PostgreSQL (tested with v10.6)
+- PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5)
 
 **NOTE**: as the script requires ArcGIS, it runs only on Windows.
 
@@ -31,34 +31,29 @@ Output is for Cumulative Effects reporting tools and similar road density analys
          $ virtualenv roadintegrator_venv
          $ roadintegrator_venv\Scripts\activate     # activate the env
 
-4. Clone the repository:  
-        
+4. Clone the repository:
+
         git clone https://github.com/bcgov/roadintegrator.git
 
-5. Using pip, install the required Python libraries:  
-        
+5. Using pip, install the required Python libraries:
+
         cd roadintegrator
         pip install --user -r requirements.txt
-        
 
-6. Using the `pgxn` client (installed via `requirements.txt`, above), install the `lostgis` extension:
 
-        $ pgxn install lostgis
-
-        
 ## Configuration
 
 ### config.yml
-To modify processing tolerances and default database/files/folders, edit `config.yml`. 
+To modify processing tolerances and default database/files/folders, edit `config.yml`.
 
 ### sources.csv
 To modify the source layers used in the analysis, edit the file referenced as `source_csv` in `config.yml`. The default source data list file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **hierarchy** column. Columns are as follows:
 
-| COLUMN                 | DESCRIPTION                                                                                                                                                                            | 
-|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------| 
+| COLUMN                 | DESCRIPTION                                                                                                                                                                            |
+|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **manual_download**        | A value of `T` indicates that a direct download url is not available for the data. Download these sources manually to the downloads folder and give the file the same name as the layer's **alias**.
-| **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`. 
-| **name**                   | Full name of the source layer 
+| **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`.
+| **name**                   | Full name of the source layer
 | **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
 |**source_table**            | Full schema.table name of source BCGW table
 |**primary_key**             | The source layer's primary key
@@ -74,19 +69,20 @@ Note that only Province of BC data sources are supported for download.
 ## Usage
 
 1. Create the postgres database if it doesn't already exist
-        $ python roadintegrator.py create_db
 
-2. Manually download datsets that are not available via the download service. As noted above, download these to the `source_data` folder noted in `config.yml` and give the .gdb file the same name as the layer's alias. 
+        $ python roadintegrator.py create-db
+
+2. Manually download datsets that are not available via the download service. As noted above, download these to the `source_data` folder noted in `config.yml` and give the .gdb file the same name as the layer's alias.
 
 3. Download and consolidate all required data:
-    
+
         $ python roadintegrator.py load
 
 3. Preprocess (tile inputs and generate lines from RESULTS polygons):
 
-        $ python roadintegratory.py preprocess
+        $ python roadintegrator.py preprocess
 
-4. Run the road integration:
+4. On a machine with ArcGIS, run the road integration:
 
         $ python roadintegrator.py process
 
@@ -107,7 +103,7 @@ Note that only Province of BC data sources are supported for download.
 
 ## Output
 As mentioned above, the analysis is very much an approximation. It works best in areas where roads are not duplicated between sources.
-These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance). 
+These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance).
 
 ### three input layers
 ![inputs](img/roadintegrator_inputs.png)

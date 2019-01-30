@@ -15,18 +15,16 @@
 import csv
 from datetime import date
 from functools import partial
-import hashlib
 import logging
 import multiprocessing
 import os
-import shutil
 import time
-from urlparse import urlparse
+from urllib.parse import urlparse
+import subprocess
 import yaml
 
 import click
 
-import bcdata
 import pgdata
 
 
@@ -35,7 +33,6 @@ with open('config.yml', 'r') as ymlfile:
 
 HELP = {
     'csv': 'Path to csv that lists all input data sources',
-    'email': 'A valid email address, used for DataBC downloads',
     'dl_path': 'Path to folder holding downloaded data',
     'alias': "The 'alias' key identifing the source of interest, from source csv",
     'out_file': 'Output geopackage name',
@@ -74,35 +71,12 @@ def get_250k_tiles(db):
 def read_csv(path):
     """Return list of dicts from file, sorted by 'priority' column
     """
-    source_list = [source for source in csv.DictReader(open(path, 'rb'))]
+    source_list = [source for source in csv.DictReader(open(path, 'r'))]
     # convert priority value to integer
     for source in source_list:
-        source.update((k, int(v)) for k, v in source.iteritems()
+        source.update((k, int(v)) for k, v in source.items()
                       if k == 'priority' and v != '')
     return sorted(source_list, key=lambda k: k['priority'])
-
-
-def download_bcgw(url, dl_path, email=None, force_refresh=False):
-    """Download BCGW data using DWDS
-    """
-    # make sure an email is provided
-    if not email:
-        email = os.environ['BCDATA_EMAIL']
-    if not email:
-        raise Exception('An email address is required to download BCGW data')
-    # check that the extracted download isn't already in tmp
-    info = bcdata.info(url)
-    schema, table = (info['schema'], info['name'])
-    #gdb = hashlib.sha224(url).hexdigest()+'.gdb'
-    gdb = schema+'_'+table+'.gdb'
-    if os.path.exists(os.path.join(dl_path, gdb)) and not force_refresh:
-        return os.path.join(dl_path, gdb)
-    else:
-        download = bcdata.download(url, email)
-        if not download:
-            raise Exception('Failed to create DWDS order')
-        shutil.copytree(download, os.path.join(dl_path, gdb))
-        return os.path.join(dl_path, gdb)
 
 
 def tiled_sql_sfcgal(sql, tile):
@@ -167,7 +141,7 @@ def tile(source, n_processes):
     db.execute("""CREATE TABLE {t} AS
                   SELECT {f},
                   ''::text as map_tile,
-                  geom
+                  ST_Multi(geom) as geom
                   FROM {src}
                   LIMIT 0
                """.format(t=alias,
@@ -285,17 +259,28 @@ def roadpoly2line(source, n_processes):
     # create filter_rings function
     db.execute(db.queries['filter_rings'])
 
+    # repair geom and dump to singlepart
+    # Note that we do not bother to keep any columns from source table
+    if alias+'_tmp' not in db.tables:
+        info(alias+': creating _tmp table with repaired geoms')
+        sql = """CREATE TABLE {t}_tmp AS
+            SELECT
+              (ST_Dump(ST_Safe_Repair((ST_Dump(geom)).geom))).geom as geom
+            FROM {t}_src""".format(t=alias)
+        db.execute(sql)
+
     # get a list of tiles present in the data
-    # (this takes a little while, so keep the result on hand)
+    # (this takes a little while, write to table)
     if alias+'_tiles' not in db.tables:
         info(alias+': generating list of tiles')
         sql = """CREATE TABLE {out} AS
-                 SELECT a.map_tile
+                 SELECT DISTINCT a.map_tile
                  FROM tiles_20k a
                  INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
-                 ORDER BY a.map_tile""".format(src=alias+'_src',
+                 ORDER BY a.map_tile""".format(src=alias+'_tmp',
                                                out=alias+'_tiles')
         db.execute(sql)
+
     tiles = [t for t in db[alias+'_tiles'].distinct('map_tile')]
 
     # create tiled/cleaned layer
@@ -305,9 +290,9 @@ def roadpoly2line(source, n_processes):
                      map_tile text,
                      geom geometry)""".format(t=alias+'_cleaned'))
 
-        lookup = {'src_table': alias+'_src',
+        lookup = {'src_table': alias+'_tmp',
                   'out_table': alias+'_cleaned'}
-        sql = db.build_query(db.queries['results_tile_clean'], lookup)
+        sql = db.build_query(db.queries['tile_roads_poly'], lookup)
 
         # tile and clean using GEOS backend
         info(alias+': tiling and cleaning')
@@ -360,16 +345,15 @@ def create_db():
 @cli.command()
 @click.option('--source_csv', '-s', default=CONFIG['source_csv'],
               type=click.Path(exists=True), help=HELP['csv'])
-@click.option('--email', help=HELP['email'])
 @click.option('--dl_path', default=CONFIG['source_data'],
               type=click.Path(exists=True), help=HELP['dl_path'])
 @click.option('--alias', '-a', help=HELP['alias'])
 @click.option('--force_refresh', is_flag=True, default=False,
               help='Force re-download')
-def load(source_csv, email, dl_path, alias, force_refresh):
+def load(source_csv, dl_path, alias, force_refresh):
     """Download data, load to postgres
     """
-    db = pgdata.connect(CONFIG['db_url'], schema='public')
+    db = pgdata.connect(CONFIG['db_url'], schema="public")
     sources = read_csv(source_csv)
     # filter sources based on optional provided alias
     if alias:
@@ -377,30 +361,34 @@ def load(source_csv, email, dl_path, alias, force_refresh):
 
     # process sources where automated downloads are avaiable
     for source in sources:
+        if force_refresh:
+            db[source["alias"]].drop()
         # manual downloads:
         # - must be placed in dl_path folder
         # - file must be .gdb with same name as alias specified in sources csv
-        if source['manual_download'] == 'T':
-            info('Loading %s from manual download' % source['alias'])
-            file = os.path.join(dl_path, source['alias']+'.gdb')
-        else:
+        if source['alias'] not in db.tables:
+            #if source['manual_download'] == 'T':
+
+            #    info('Loading %s from manual download' % source['alias'])
+            #    db.ogr2pg(
+            #        os.path.join(dl_path, source['alias']+'.gdb'),
+            #        in_layer=source['layer_in_file'],
+            #        out_layer=source['alias'],
+            #        sql=source['query']
+            #    )
+            #else:
             info('Downloading %s' % source['alias'])
-            # handle BCGW downloads
-            if urlparse(source['url']).hostname == 'catalogue.data.gov.bc.ca':
-                file = download_bcgw(source['url'], dl_path, email=email,
-                                     force_refresh=force_refresh)
-                info('%s downloaded to %s' % (source['alias'], file))
-
-            # handle all other downloads
-            else:
-                raise Exception('Only DataBC Catalogue downloads are supported')
-
-        # load downloaded data to postgres
-        if source['alias'] not in db.tables or force_refresh:
-            db.ogr2pg(file,
-                      in_layer=source['layer_in_file'],
-                      out_layer=source['alias'],
-                      sql=source['query'])
+            # Use bcdata bc2pg (ogr2ogr wrapper) to load the data to postgres
+            command = [
+                "bcdata bc2pg {}".format(source["source_table"]),
+                "--schema public",
+                "--table {}".format(source["alias"]),
+                "--db_url {}".format(CONFIG["db_url"]),
+                "--sortby {}".format(source["primary_key"])
+            ]
+            if source["query"]:
+                command.append('--query "{}"'.format(source["query"]))
+            subprocess.call(" ".join(command), shell=True)
 
 
 @cli.command()
@@ -480,6 +468,7 @@ def process(source_csv, n_processes, tiles):
     arcutil.create_wksp(gdb_path, gdb)
     arcpy.Merge_management(outputs, CONFIG['output'])
     click.echo('Output ready in : ' + CONFIG['output'])
+
 
 if __name__ == '__main__':
     cli()
