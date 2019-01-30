@@ -18,7 +18,6 @@ from functools import partial
 import logging
 import multiprocessing
 import os
-import time
 from urllib.parse import urlparse
 import subprocess
 import yaml
@@ -33,7 +32,6 @@ with open('config.yml', 'r') as ymlfile:
 
 HELP = {
     'csv': 'Path to csv that lists all input data sources',
-    'dl_path': 'Path to folder holding downloaded data',
     'alias': "The 'alias' key identifing the source of interest, from source csv",
     'out_file': 'Output geopackage name',
     'out_format': 'Output format. Default GPKG (Geopackage)'}
@@ -165,86 +163,6 @@ def tile(source, n_processes):
     pool.join()
 
 
-def integrate(sources, tile):
-    """
-    For given tile:
-      - load road data from each source
-      - shift low priority roads within specified tolerance of higher priority
-        roads to match position of higher priority roads
-      - remove duplicate roads from lower priority source
-      - merge all road sources into single layer
-    """
-    import arcpy
-    import arcutil
-
-    src_wksp = os.path.join(CONFIG['temp_data'], 'sources.gdb')
-    tile_wksp = os.path.join(CONFIG['temp_data'], 'tiles')
-    make_sure_path_exists(tile_wksp)
-    out_fc = os.path.join(tile_wksp, 'temp_'+tile+'.gdb', 'roads_'+tile)
-    if not arcpy.Exists(out_fc):
-        start_time = time.time()
-        # create tile workspace
-        tile_wksp = arcutil.create_wksp(tile_wksp, 'temp_'+tile+'.gdb')
-        # try and do all work in memory
-        arcpy.env.workspace = 'in_memory'
-        # get data for each source layer within given tile
-        for layer in sources:
-            src_layer = os.path.join(src_wksp, layer['alias'])
-            mem_layer = layer['alias']+'_'+tile
-            tile_query = CONFIG['tile_column']+" LIKE '"+tile+"%'"
-            arcutil.copy_data(src_layer, mem_layer, tile_query)
-
-        # use only layers that actually have data for the tile
-        roads = []
-        for layer in sources:
-            mem_layer = layer['alias']+'_'+tile
-            if arcutil.n_records(mem_layer) > 0:
-                roads = roads + [mem_layer]
-
-        # only run the integrate / erase etc if there is more than one road source
-        if len(roads) > 1:
-            # regenerate priority numbers, in case empty layers have been removed
-            integrate_str = ';'.join([r+' '+str(i+1) for i,r in enumerate(roads)])
-            # perform integrate, modifing extracted road data in place,
-            # snapping roads within tolerance
-            arcpy.Integrate_management(integrate_str, CONFIG['tolerance'])
-            # start with the roads of top priority,
-            in_layer = roads[0]
-            # then loop through the rest of the roads
-            for i in range(1, len(roads)):
-                out_layer = 'temp_'+tile+'_'+str(i)
-                # erase first layer or previous output with next roads layer
-                arcpy.Erase_analysis(roads[i],
-                                     in_layer,
-                                     'temp_missing_roads_'+tile,
-                                     '0.01 Meters')
-                # merge the output missing roads with the previous input
-                arcpy.Merge_management(["temp_missing_roads_"+tile, in_layer],
-                                       out_layer)
-                arcpy.Delete_management("temp_missing_roads_"+tile)
-                in_layer = out_layer
-            # write to output gdb
-            arcutil.copy_data(out_layer, os.path.join(tile_wksp, "roads_"+tile))
-            # delete temp layers
-            for i in range(1, len(roads)):
-                arcpy.Delete_management("temp_"+tile+"_"+str(i))
-
-        # append single road source to output
-        elif len(roads) == 1:
-            arcutil.copy_data(roads[0], os.path.join(tile_wksp, "roads_"+tile))
-
-        # if there aren't any roads, don't do anything
-        elif len(roads) == 0:
-            click.echo('No roads present in tile '+tile)
-
-        # cleanup
-        for layer in sources:
-            if arcpy.Exists(layer["alias"]+"_"+tile):
-                arcpy.Delete_management(layer["alias"]+"_"+tile)
-        elapsed_time = time.time() - start_time
-        click.echo("Completed "+tile+": "+str(elapsed_time))
-
-
 def roadpoly2line(source, n_processes):
     """Translate road polygon boundaries into road-like lines
     """
@@ -345,12 +263,10 @@ def create_db():
 @cli.command()
 @click.option('--source_csv', '-s', default=CONFIG['source_csv'],
               type=click.Path(exists=True), help=HELP['csv'])
-@click.option('--dl_path', default=CONFIG['source_data'],
-              type=click.Path(exists=True), help=HELP['dl_path'])
 @click.option('--alias', '-a', help=HELP['alias'])
 @click.option('--force_refresh', is_flag=True, default=False,
               help='Force re-download')
-def load(source_csv, dl_path, alias, force_refresh):
+def load(source_csv, alias, force_refresh):
     """Download data, load to postgres
     """
     db = pgdata.connect(CONFIG['db_url'], schema="public")
@@ -421,53 +337,6 @@ def preprocess(source_csv, alias, n_processes):
                   os.path.join(CONFIG['temp_data'], 'sources.gdb'),
                   source['alias'],
                   geom_type='MULTILINESTRING')
-
-
-@cli.command()
-@click.option('--source_csv', '-s', default=CONFIG['source_csv'],
-              type=click.Path(exists=True), help=HELP['csv'])
-@click.option('--n_processes', '-p', default=multiprocessing.cpu_count() - 1,
-              help="Number of parallel processing threads to utilize")
-@click.option("--tiles", "-t",
-              help='Comma separated list of tiles to process')
-def process(source_csv, n_processes, tiles):
-    """ Process road integration
-    """
-    import arcpy
-    import arcutil
-
-    start_time = time.time()
-    if not tiles:
-        db = pgdata.connect(CONFIG['db_url'], schema='public')
-        tiles = get_250k_tiles(db)
-    else:
-        tiles = tiles.split(',')
-    sources = read_csv(source_csv)
-    # only use a source layer if it has a priority value
-    sources = [s for s in sources if s['priority'] != 0]
-    # split processing between multiple processes
-    # n processes is equal to processess parmeter in config
-    click.echo("Processing tiles")
-    func = partial(integrate, sources)
-    pool = multiprocessing.Pool(processes=n_processes)
-    pool.map(func, tiles)
-    pool.close()
-    pool.join()
-
-    elapsed_time = time.time() - start_time
-    click.echo("All tiles complete in : "+str(elapsed_time))
-    click.echo("Merging tiles to output...")
-    # merge outputs to single output layer
-    outputs = []
-    for t in tiles:
-        fc = os.path.join(CONFIG['temp_data'], 'tiles', 'temp_'+t+'.gdb', 'roads_'+t)
-        if arcpy.Exists(fc):
-            outputs = outputs + [fc]
-    gdb, fc = os.path.split(CONFIG['output'])
-    gdb_path, gdb = os.path.split(gdb)
-    arcutil.create_wksp(gdb_path, gdb)
-    arcpy.Merge_management(outputs, CONFIG['output'])
-    click.echo('Output ready in : ' + CONFIG['output'])
 
 
 if __name__ == '__main__':

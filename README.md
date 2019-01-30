@@ -1,38 +1,45 @@
 # roadintegrator
 
-Collect various BC road data sources, preprocess and tile, then use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
+Collect various BC road data sources, preprocess and tile, then use the ArcGIS
+[Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000)
+to merge the roads into a single layer.
 
-Note that the road merging process is an approximation - the output should not be considered definitive. See [output](#output) below for more details.
+Note that the road merging process is an approximation - the output should not
+be considered definitive. See [output](#output) below for more details.
 
-Output is for Cumulative Effects reporting tools and similar road density analyses; for projects requiring a clean road network (routing, mapping, etc) please use the individual source road layers.
+Output is for Cumulative Effects reporting tools and similar road density analyses;
+for projects requiring a clean road network (routing, mapping, etc) please use
+the individual source road layers.
 
 ## Requirements
 
-- Python 3
-- ArcGIS Desktop (with Advanced License, tested with ArcGIS Pro v2.2)
+For data prep:
+
+- Python 3 (for data prep script)
 - GDAL/OGR (tested with v2.4.0)
 - PostgreSQL (tested with v10.6)
 - PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5)
 
+For integrate command:
+
+- Python 2 (for ArcGIS script)
+- ArcGIS Desktop (tested with v10.6)
+
 ## Setup
 
-1. Ensure pip is installed, [install]((https://pip.pypa.io/en/stable/installing/)) if it is not.
+1. On data preparation machine (with GDAL, Postgres), clone the repository,
+create virtualenv, install Python dependencies:
 
-2. (Optional) Consider installing dependencies to a virtual environment rather than to the system Python or your home directory:
+        $ git clone https://github.com/bcgov/roadintegrator.git
+        $ cd roadintegrator
+        $ virtualenv venv
+        $ venv\Scripts\activate
+        $ pip install -r requirements.txt
 
-         $ pip install virtualenv                   # if not already installed
-         $ mkdir roadintegrator_venv
-         $ virtualenv roadintegrator_venv
-         $ roadintegrator_venv\Scripts\activate     # activate the env
+2. On ArcGIS machine, clone the repositiory and install the one extra dependency, `click`
 
-3. Clone the repository:
-
-        git clone https://github.com/bcgov/roadintegrator.git
-
-4. Using pip, install the required Python libraries:
-
-        cd roadintegrator
-        pip install --user -r requirements.txt
+        $ git clone https://github.com/bcgov/roadintegrator.git
+        $ pip install --user click
 
 
 ## Configuration
@@ -59,21 +66,21 @@ Note that this tool only supports downloading sources available through the Data
 
 ## Usage
 
-1. Create the postgres database if it doesn't already exist
+1. Create the postgres database if it doesn't already exist:
 
-        $ python roadintegrator.py create-db
+        $ python 1_prep.py create-db
 
 2. Download and consolidate all required data:
 
-        $ python roadintegrator.py load
+        $ python 1_prep.py load
 
 3. Preprocess (tile inputs and generate lines from RESULTS polygons):
 
-        $ python roadintegrator.py preprocess
+        $ python 1_prep.py preprocess
 
-4. Run the road integration:
+4. Copy prepped data to a machine with ArcGIS, run the road integration:
 
-        $ python roadintegrator.py process
+        $ python 2_integrate.py
 
 5. When processing is complete, find output layer in `output` gdb specified in `config.yml`
 
