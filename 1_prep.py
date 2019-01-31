@@ -181,9 +181,6 @@ def roadpoly2line(source, n_processes):
         sql = "ALTER TABLE {t} RENAME TO {t}_src".format(t=alias)
         db.execute(sql)
 
-    # create filter_rings function
-    db.execute(db.queries["filter_rings"])
-
     # repair geom and dump to singlepart
     # Note that we do not bother to keep any columns from source table
     if alias + "_tmp" not in db.tables:
@@ -267,12 +264,16 @@ def cli():
 
 @cli.command()
 def create_db():
-    """Create a fresh database
+    """Create a fresh database / load extensions / create functions
     """
     pgdata.create_db(CONFIG["db_url"])
     db = pgdata.connect(CONFIG["db_url"])
     db.execute("CREATE EXTENSION postgis")
     db.execute("CREATE EXTENSION postgis_sfcgal")
+    db.execute(db.queries["ST_Safe_Repair"])
+    db.execute(db.queries["ST_Safe_Intersection"])
+    db.execute(db.queries["ST_Safe_Difference"])
+    db.execute(db.queries["ST_Filter_Rings"])
 
 
 @cli.command()
