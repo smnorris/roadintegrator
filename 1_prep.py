@@ -19,8 +19,7 @@ with open("config.yml", "r") as ymlfile:
 HELP = {
     "csv": "Path to csv that lists all input data sources",
     "alias": "The 'alias' key identifing the source of interest, from source csv",
-    "out_file": "Output geopackage name",
-    "out_format": "Output format. Default GPKG (Geopackage)",
+    "out_file": "Output geodatabase file name"
 }
 
 logging.basicConfig(level=logging.INFO)
@@ -350,7 +349,7 @@ def preprocess(source_csv, alias, n_processes):
         db.pg2ogr(
             "SELECT * FROM {t}".format(t=source["alias"]),
             "FileGDB",
-            os.path.join(CONFIG["temp_data"], "sources.gdb"),
+            os.path.join(CONFIG["temp_data"], "prepped.gdb"),
             source["alias"],
             geom_type="MULTILINESTRING",
         )

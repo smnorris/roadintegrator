@@ -20,9 +20,7 @@ with open("config.yml", "r") as ymlfile:
 
 HELP = {
     "csv": "Path to csv that lists all input data sources",
-    "alias": "The 'alias' key identifing the source of interest, from source csv",
-    "out_file": "Output geopackage name",
-    "out_format": "Output format. Default GPKG (Geopackage)",
+    "alias": "The 'alias' key identifing the source of interest, from source csv"
 }
 
 logging.basicConfig(level=logging.INFO)
@@ -190,7 +188,7 @@ def integrate(sources, tile):
       - remove duplicate roads from lower priority source
       - merge all road sources into single layer
     """
-    src_wksp = os.path.join(CONFIG["temp_data"], "sources.gdb")
+    src_wksp = os.path.join(CONFIG["temp_data"], "prepped.gdb")
     tile_wksp = os.path.join(CONFIG["temp_data"], "tiles")
     make_sure_path_exists(tile_wksp)
     out_fc = os.path.join(tile_wksp, "temp_" + tile + ".gdb", "roads_" + tile)
