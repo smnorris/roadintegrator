@@ -64,7 +64,7 @@ To modify the source layers used in the analysis, edit the file referenced as `s
 | **primary_key**            | The source layer's primary key
 | **fields**                 | The fields in the source layer to retain in the output
 | **url**                    | Download url for the data source
-| **query**                  | A SQL query defining the subset of data of interest from the given file/layer (SQLite dialect)
+| **query**                  | A valid CQL or ECQL query for filtering the data (https://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html)
 | **preprocess_operation**   | Pre-processing operation to apply to layer (`tile` and `roadpoly2line` are the only supported operations)
 
 Note that this tool only supports downloading sources available through the DataBC Catalogue.
@@ -79,12 +79,11 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py load
 
-3. Preprocess (tile inputs and generate lines from RESULTS polygons):
+3. Preprocess (tile inputs and generate linear features from polygon inputs):
 
         $ python 1_prep.py preprocess
 
-4. First, copy the prepped data (the .gdb in folder noted as `temp_data` in `config.yml`)
-to ArcGIS machine, then run the road integration:
+4. If required, manually copy the prepped data (the .gdb in folder noted as `temp_data` in `config.yml`) to the ArcGIS machine, then run the road integration:
 
         C:\path\to\project> python 2_integrate.py
 
@@ -111,7 +110,7 @@ When processing is complete, find output layer in `output` gdb specified in `con
 
 - download all required source data from DataBC Catalogue
 - load all source data to PostGIS
-- in PostGIS, preprocess source road layers, creating lines from RESULTS road polyons and tiling all sources
+- in PostGIS, preprocess source road layers, creating lines from input road polyons and tiling all sources
 - dump sources road layers into a single gdb
 - looping through tiles (20k or 250k):
     + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on hierarchy specified in `sources.csv`
