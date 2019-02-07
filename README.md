@@ -76,15 +76,17 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py create-db
 
-2. Download and consolidate all required data:
+2. Download publicly accessible data:
 
         $ python 1_prep.py load
 
-3. Preprocess (tile inputs and generate linear features from polygon inputs):
+3. Manually download any sources that are not publicly accessible and load to the working database.
+
+4. Preprocess (tile inputs and generate linear features from polygon inputs):
 
         $ python 1_prep.py preprocess
 
-4. If required, manually copy the prepped data (`prepped.gdb` in folder noted as `temp_data` in `config.yml`) to the same `temp_data` folder on the ArcGIS machine, then run the road integration:
+5. If required, manually copy the prepped data (`prepped.gdb` in folder noted as `temp_data` in `config.yml`) to the same `temp_data` folder on the ArcGIS machine, then run the road integration:
 
         C:\path\to\project> python 2_integrate.py
 

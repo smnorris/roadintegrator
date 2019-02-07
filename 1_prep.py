@@ -281,7 +281,7 @@ def load(source_csv, alias, force_refresh):
         sources = [s for s in sources if s["alias"] == alias]
 
     # process sources where automated downloads are avaiable
-    for source in sources:
+    for source in [s for s in sources if s["manual_download"] != 'T']:
         if force_refresh:
             db[source["alias"]].drop()
         # manual downloads:
