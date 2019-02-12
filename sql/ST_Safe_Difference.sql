@@ -1,7 +1,7 @@
-# https://github.com/gojuno/lostgis/blob/master/sql/functions/ST_Safe_Difference.sql
+-- https://github.com/gojuno/lostgis/blob/master/sql/functions/ST_Safe_Difference.sql
 
-# modified only to make parallel unsafe, parallel processing is per tile, and
-# handled by Python
+-- modified only to make parallel unsafe, parallel processing is per tile, and
+-- handled by Python
 
 create or replace function ST_Safe_Difference(
     geom_a           geometry,
@@ -31,7 +31,7 @@ begin
     when others
         then
             begin
-                raise notice 'ST_Safe_Difference: making everything valid (%)', message;
+                raise notice 'ST_Safe_Difference: making everything valid';
                 return
                 ST_Translate(
                     ST_Safe_Repair(
@@ -46,7 +46,7 @@ begin
                 exception
                 when others
                     then
-                        raise warning 'ST_Safe_Difference: everything failed (%)', message;
+                        raise warning 'ST_Safe_Difference: everything failed';
                         return ST_Safe_Repair(geom_a);
             end;
 end

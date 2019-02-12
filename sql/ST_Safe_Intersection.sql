@@ -1,7 +1,7 @@
-# https://github.com/gojuno/lostgis/blob/master/sql/functions/ST_Safe_Difference.sql
+-- https://github.com/gojuno/lostgis/blob/master/sql/functions/ST_Safe_Difference.sql
 
-# modified only to make parallel unsafe, parallel processing is per tile, and
-# handled by Python
+-- modified only to make parallel unsafe, parallel processing is per tile, and
+-- handled by Python
 
 create or replace function ST_Safe_Intersection(
     geom_a           geometry,
@@ -14,7 +14,7 @@ $$
 begin
     if geom_b is null
     then
-        raise notice 'ST_Safe_Intersection: second geometry is NULL (%)', message;
+        raise notice 'ST_Safe_Intersection: second geometry is NULL';
         return geom_b;
     end if;
     return
@@ -28,7 +28,7 @@ begin
     when others
         then
             begin
-                raise notice 'ST_Safe_Intersection: making everything valid (%)', message;
+                raise notice 'ST_Safe_Intersection: making everything valid ';
                 return
                 ST_Translate(
                     ST_Safe_Repair(
@@ -44,7 +44,7 @@ begin
                 when others
                     then
                         begin
-                            raise notice 'ST_Safe_Intersection: buffering everything (%)', message;
+                            raise notice 'ST_Safe_Intersection: buffering everything';
                             return
                             ST_Safe_Repair(
                                 ST_Intersection(
@@ -61,7 +61,7 @@ begin
                             exception
                             when others
                                 then
-                                    raise exception 'ST_Safe_Intersection: everything failed (%)', message;
+                                    raise exception 'ST_Safe_Intersection: everything failed';
                         end;
             end;
 end
