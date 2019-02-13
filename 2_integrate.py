@@ -309,6 +309,9 @@ def process(source_csv, n_processes, tiles):
             outputs = outputs + [fc]
     gdb = "integrated_roads.gdb"
     fc = "integrated_roads"
+    # overwrite if output .gdb exists
+    if os.path.exists(os.path.join(os.getcwd(), gdb)):
+        shutil.rmtree(os.path.join(os.getcwd(), gdb))
     out_gdb = create_wksp(os.getcwd(), gdb)
     arcpy.Merge_management(outputs, os.path.join(out_gdb, fc))
     click.echo("Output ready in : " + gdb)
