@@ -263,61 +263,6 @@ def integrate(sources, tile):
         click.echo("Completed " + tile + ": " + str(elapsed_time))
 
 
-def merge(sources, tiles):
-    """Merge output tile .gdb layers into single output
-    """
-    click.echo("Merging tiles to output...")
-    out_gdb = os.path.join(os.getcwd(), "integrated_roads.gdb")
-    # remove existing output
-    if os.path.exists(out_gdb):
-        shutil.rmtree(out_gdb)
-
-    # build orderd list of fields to retain
-    # don't use tile source layers or any layers coming from polygon roads
-    sources = [s for s in sources if s["alias"] != "tiles_20k"]
-    sources = [s for s in sources if s["preprocess_operation"] != "roadpoly2line"]
-    fields = []
-    for source in sources:
-        fieldlist = [source["primary_key"]] + source["fields"].split(",")
-        fields = fields + [source["alias"] + "_" + f.lower() for f in fieldlist]
-
-    fieldstring = ", ".join([f.strip() + " AS " + f.strip().upper() for f in fields])
-
-    # build list of tiles with data
-    out_tiles = []
-    for tile in tiles:
-        in_gdb = os.path.join(CONFIG["temp_data"], "tiles", "temp_" + tile + ".gdb")
-        in_layer = "roads_" + tile
-        if arcpy.Exists(os.path.join(in_gdb, in_layer)):
-            out_tiles.append(tile)
-    for i, tile in enumerate(out_tiles):
-        sql = """SELECT
-            bcgw_source AS BCGW_SOURCE,
-            bcgw_extraction_date AS BCGW_EXTRACTION_DATE,
-            map_tile AS MAP_TILE_20K,
-            {f},
-            geom
-            FROM {lyr}""".format(
-            f=fieldstring, lyr=in_layer
-        )
-        command = [
-            "ogr2ogr",
-            "-progress",
-            "-f",
-            "FileGDB",
-            "-nln",
-            "integrated_roads",
-            "-dialect",
-            "SQLITE",
-            out_gdb,
-            in_gdb,
-        ]
-        if i != 1:
-            command.insert(len(command), "-update")
-            command.insert(len(command), "-append")
-        subprocess.call(command)
-
-
 @click.command()
 @click.option(
     "--source_csv",
@@ -355,9 +300,6 @@ def process(source_csv, n_processes, tiles):
 
     elapsed_time = time.time() - start_time
     click.echo("All tiles complete in : " + str(elapsed_time))
-
-    merge(sources, tiles)
-    click.echo("Output ready: integrated_roads.gdb ")
 
 
 if __name__ == "__main__":
