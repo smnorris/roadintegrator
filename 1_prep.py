@@ -100,6 +100,22 @@ def add_meta_columns(db, source):
     db.execute(sql, (source["source_table"], date.today().isoformat()))
 
 
+def rename_source_columns(db, source):
+    """ Prepend source data columns with source data alias
+    eg for dra, road_name_full becomes dra_road_name_full
+    """
+    alias = source["alias"]
+    info("adding alias prefix to source columns")
+    fields = source["primary_key"] + "," + source["fields"].lower()
+    for col in fields.split(","):
+        if col.strip().lower() in db[alias].columns:
+            sql = """ALTER TABLE {a} RENAME COLUMN {c} TO {a}_{c}
+                  """.format(
+                a=alias, c=col.strip().lower()
+            )
+            db.execute(sql)
+
+
 def tile(source, n_processes):
     """Tile input road table
     """
@@ -280,24 +296,11 @@ def load(source_csv, alias, force_refresh):
     if alias:
         sources = [s for s in sources if s["alias"] == alias]
 
-    # process sources where automated downloads are avaiable
+    # load sources where automated downloads are avaiable
     for source in [s for s in sources if s["manual_download"] != 'T']:
         if force_refresh:
             db[source["alias"]].drop()
-        # manual downloads:
-        # - must be placed in dl_path folder
-        # - file must be .gdb with same name as alias specified in sources csv
         if source["alias"] not in db.tables:
-            # if source['manual_download'] == 'T':
-
-            #    info('Loading %s from manual download' % source['alias'])
-            #    db.ogr2pg(
-            #        os.path.join(dl_path, source['alias']+'.gdb'),
-            #        in_layer=source['layer_in_file'],
-            #        out_layer=source['alias'],
-            #        sql=source['query']
-            #    )
-            # else:
             info("Downloading %s" % source["alias"])
             # Use bcdata bc2pg (ogr2ogr wrapper) to load the data to postgres
             command = [
@@ -310,6 +313,8 @@ def load(source_csv, alias, force_refresh):
             if source["query"]:
                 command.append('--query "{}"'.format(source["query"]))
             subprocess.call(" ".join(command), shell=True)
+    for source in [s for s in sources if s["manual_download"] == 'T']:
+        click.echo("Load {} to db manually".format(source["alias"]))
 
 
 @cli.command()
@@ -343,9 +348,9 @@ def preprocess(source_csv, alias, n_processes):
         globals()[function](source, n_processes)
         # add required extraction date and source layer columns
         add_meta_columns(db, source)
+        # rename the source fields, prefixing with data alias
+        rename_source_columns(db, source)
         # dump data to .gdb for subsequent arcpy processing
-        # (query layers pointing to postgres in arcgis should work fine, but
-        # this allows us to use existing code)
         db.pg2ogr(
             "SELECT * FROM {t}".format(t=source["alias"]),
             "FileGDB",
