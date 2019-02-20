@@ -81,12 +81,15 @@ def merge():
             "integrated_roads",
             "-dialect",
             "SQLITE",
+            "-sql",
+            sql,
             out_gdb,
             in_gdb,
         ]
-        if i != 1:
-            command.insert(len(command), "-update")
-            command.insert(len(command), "-append")
+        if i != 0:
+            command.insert(1, "-update")
+            command.insert(2, "-append")
+        click.echo(" ".join(command))
         subprocess.call(command)
 
 
