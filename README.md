@@ -13,9 +13,9 @@ the individual source road layers.
 
 ## Requirements
 
-Two scripts are provided, each has different requirements:
+Three scripts are provided:
 
-For `1_prep.py`:
+For `1_prep.py` and `3_merge.py`:
 
 - Python 3 (tested with v3.7)
 - GDAL/OGR (tested with v2.4.0)
