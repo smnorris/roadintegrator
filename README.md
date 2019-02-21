@@ -66,7 +66,7 @@ create virtualenv, install Python dependencies:
 To modify processing tolerances and default database/files/folders, edit `config.yml`.
 
 ### sources.csv
-To modify the source layers used in the analysis, edit the file referenced as `source_csv` in `config.yml`. The default source data list file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **hierarchy** column. Columns are as follows:
+To modify the source layers used in the analysis, edit the file referenced as `source_csv` in `config.yml`. The default source data list file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **priority** column. Columns are as follows:
 
 | COLUMN                 | DESCRIPTION                                                                                                                                                                            |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -74,7 +74,7 @@ To modify the source layers used in the analysis, edit the file referenced as `s
 | **manual_download**        | 'Y' if the data must be manually downloaded
 | **name**                   | Full name of the source layer
 | **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
-| **source_table**           | Full schema.table name of source BCGW table
+| **source_table**           | Full SCHEMA.TABLE object name of source BCGW table
 | **primary_key**            | The source layer's primary key
 | **fields**                 | The fields in the source layer to retain in the output, in order to be written to output layer
 | **url**                    | DataBC Catalogue URL
@@ -98,12 +98,14 @@ Note that this tool only supports downloading sources available through the Data
 4. Preprocess (tile inputs and generate linear features from polygon inputs):
 
         $ python 1_prep.py preprocess
+Move the resulting `temp_data/prepped.gdb` to equivalent folder on a machine with ArcGIS 10.6/Python 2.7.
 
-5. Run the road integration (on machine with ArcGIS 10.6/Python 2.7, `prepped.gdb` must be in folder noted as `temp_data` in `config.yml`) on the ArcGIS machine):
+5. Run the road integration:
 
         C:\path\to\project> python 2_integrate.py
+Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc.
 
-6. Merge the tiled outputs (moving the tiled output of integrate to local machine with Python3 / gdal / fiona may be necessary):
+6. Merge the tiled outputs:
 
         $ python 3_merge.py
 
