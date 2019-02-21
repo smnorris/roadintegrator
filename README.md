@@ -105,11 +105,10 @@ Move the resulting `temp_data/prepped.gdb` to equivalent folder on a machine wit
         C:\path\to\project> python 2_integrate.py
 Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc.
 
-6. Merge the tiled outputs:
+6. Merge the tiled outputs to create `integrated_roads.gdb`:
 
         $ python 3_merge.py
 
-When merge is complete, find output layer in `output` gdb specified in `config.yml`
 
 
 ## Limitations
