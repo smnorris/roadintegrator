@@ -1,27 +1,18 @@
 # roadintegrator
 
-Collect various BC road data sources, preprocess and tile, then use the ArcGIS
-[Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
+Collect and combine various BC road data sources in order of priority. When a lower priority road feature is within 7m (or otherwise specified) of a higher priority road, it is snapped to the the location of the higher priority road using the ArcGIS [Integrate tool](http://desktop.arcgis.com/en/arcmap/latest/tools/data-management-toolbox/integrate.htm).  Once all sources are snapped/integrated, roads from each source are added to the output in order of priority - if the road is not already present.
 
 
-## NOTE
+## Limitations and Caveats
 
-The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The road integration process used in these scripts is an approximation and output created is specifically for cumulative effects analysis. It is intended for strategic level analysis and should not be considered as positionally accurate or used for navigation.
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The road integration process used in these scripts is an approximation and the output created is specifically for cumulative effects analysis. It is intended for strategic level analysis and should not be considered positionally accurate or used for navigation.
 
 The output dataset contains line work from many sources, some representing built roads and some representing road tenures. Potential issues include:
 
-- duplicates of the same road defined in different sources that are not within the integration distance (7m) (see [Limitations](#Limitations) below)
+- duplicates of the same road defined in different sources that are not within the integration distance (7m) (see [Duplications](#Duplications) below)
 - roads that have not been built
 - roads that are overgrown or otherwise impassible
 - existing roads that are not mapped in any of the noted sources will not be included (ie, some roads may be missed)
-
-
-## Methodology
-
-1. Define source layers and their relative priority in `sources.csv`
-2. Run script to collect and preprocess data (download, tile and convert polygons to lines where necessary)
-3. Combine the road layers - when a lower priority road feature is within 7m (or as otherwise specified in `config.yml`) of a higher priority road, it is snapped to the the location of the higher priority road (using the ArcGIS [Integrate tool](http://desktop.arcgis.com/en/arcmap/latest/tools/data-management-toolbox/integrate.htm)).  Once all data are snapped/integrated, roads from each source are added to the output layer if they are not already in the output from the previous (higher priority) sources.
-
 
 ## Requirements
 
@@ -111,7 +102,7 @@ Move the resulting `temp_data/tiles` back to equivalent folder on the machine wi
 
 
 
-## Limitations
+## Duplications
 As mentioned above, the analysis is very much an approximation. It works best in areas where roads are not duplicated between sources.
 These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance).
 
