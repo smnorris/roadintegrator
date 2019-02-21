@@ -86,27 +86,15 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py preprocess
 
-5. If required, manually copy the prepped data (`prepped.gdb` in folder noted as `temp_data` in `config.yml`) to the same `temp_data` folder on the ArcGIS machine, then run the road integration:
+5. Run the road integration (on machine with ArcGIS 10.6/Python 2.7, `prepped.gdb` must be in folder noted as `temp_data` in `config.yml`) on the ArcGIS machine):
 
         C:\path\to\project> python 2_integrate.py
 
-See `--help` for each command to view available options. For example:
+6. Merge the tiled outputs (moving the tiled output of integrate to local machine with Python3 / gdal / fiona may be necessary):
 
-```
-$ python 1_prep.py load --help
-Usage: 1_prep.py load [OPTIONS]
+        $ python 3_merge.py
 
-  Download data, load to postgres
-
-Options:
-  -s, --source_csv PATH  Path to csv that lists all input data sources
-  -a, --alias TEXT       The 'alias' key identifing the source of interest,
-                         from source csv
-  --force_refresh        Force re-download
-  --help                 Show this message and exit.
-```
-
-When processing is complete, find output layer in `output` gdb specified in `config.yml`
+When merge is complete, find output layer in `output` gdb specified in `config.yml`
 
 
 ## Methodology
