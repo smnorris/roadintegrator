@@ -6,14 +6,14 @@ Collect various BC road data sources, preprocess and tile, then use the ArcGIS
 
 ## NOTE
 
-The authoritative source for built roads in British Columbia is the [Digital Road Atlas](http://geobc.gov.bc.ca/base-mapping/atlas/dra). The road integration process used in these scripts is an approximation and output created is specifically for cumulative effects analysis. It is intended for strategic level analysis and should not be considered as positionally accurate or used for navigation.
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The road integration process used in these scripts is an approximation and output created is specifically for cumulative effects analysis. It is intended for strategic level analysis and should not be considered as positionally accurate or used for navigation.
 
 The output dataset contains line work from many sources, some representing built roads and some representing road tenures. Potential issues include:
 
 - duplicates of the same road defined in different sources that are not within the integration distance (7m) (see [Limitations](#Limitations) below)
 - roads that have not been built
 - roads that are overgrown or otherwise impassible
-- existing roads that are not mapped in any the noted sources will not be included (ie, some roads may be missed)
+- existing roads that are not mapped in any of the noted sources will not be included (ie, some roads may be missed)
 
 
 ## Methodology
@@ -51,7 +51,7 @@ create virtualenv, install Python dependencies:
         $ venv\Scripts\activate
         $ pip install -r requirements.txt
 
-2. On ArcGIS machine, clone the repositiory, install dependencies. Also, the tool requires the [64bit ArcGIS Python](http://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm) - integrate will fail with topology errors using the 32bit Python. The PATH below is for ArcGIS 10.6 on a GTS server, modify as required:
+2. On ArcGIS machine, clone the repositiory, install dependencies. Also, the tool requires the [64bit ArcGIS Python](http://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm) - integrate will fail with topology errors using the 32bit Python. The PATH setting below is for ArcGIS 10.6 on a BC Gov GTS server, modify as required:
 
         C:\> git clone https://github.com/smnorris/roadintegrator.git
         C:\> cd roadintegrator
@@ -71,12 +71,13 @@ To modify the source layers used in the analysis, edit the file referenced as `s
 | COLUMN                 | DESCRIPTION                                                                                                                                                                            |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`.
+| **manual_download**        | 'Y' if the data must be manually downloaded
 | **name**                   | Full name of the source layer
 | **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
 | **source_table**           | Full schema.table name of source BCGW table
 | **primary_key**            | The source layer's primary key
-| **fields**                 | The fields in the source layer to retain in the output
-| **url**                    | Download url for the data source
+| **fields**                 | The fields in the source layer to retain in the output, in order to be written to output layer
+| **url**                    | DataBC Catalogue URL
 | **query**                  | A valid CQL or ECQL query for filtering the data (https://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html)
 | **preprocess_operation**   | Pre-processing operation to apply to layer (`tile` and `roadpoly2line` are the only supported operations)
 
@@ -92,7 +93,7 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py load
 
-3. Manually download any sources that are not publicly accessible and load to the working database.
+3. Manually download any sources that are not publicly accessible and load to the working database (using the alias specified in `sources.csv`.
 
 4. Preprocess (tile inputs and generate linear features from polygon inputs):
 
