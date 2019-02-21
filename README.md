@@ -1,15 +1,27 @@
 # roadintegrator
 
 Collect various BC road data sources, preprocess and tile, then use the ArcGIS
-[Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000)
-to merge the roads into a single layer.
+[Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to merge the roads into a single layer.
 
-Note that the road merging process is an approximation - the output should not
-be considered definitive. See [output](#output) below for more details.
 
-Output is for Cumulative Effects reporting tools and similar road density analyses;
-for projects requiring a clean road network (routing, mapping, etc) please use
-the individual source road layers.
+## NOTE
+
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](http://geobc.gov.bc.ca/base-mapping/atlas/dra). The road integration process used in these scripts is an approximation and output created is specifically for cumulative effects analysis. It is intended for strategic level analysis and should not be considered as positionally accurate or used for navigation.
+
+The output dataset contains line work from many sources, some representing built roads and some representing road tenures. Potential issues include:
+
+- duplicates of the same road defined in different sources that are not within the integration distance (7m) (see [Limitations](#Limitations) below)
+- roads that have not been built
+- roads that are overgrown or otherwise impassible
+- existing roads that are not mapped in any the noted sources will not be included (ie, some roads may be missed)
+
+
+## Methodology
+
+1. Define source layers and their relative priority in `sources.csv`
+2. Run script to collect and preprocess data (download, tile and convert polygons to lines where necessary)
+3. Combine the road layers - when a lower priority road feature is within 7m (or as otherwise specified in `config.yml`) of a higher priority road, it is snapped to the the location of the higher priority road (using the ArcGIS [Integrate tool](http://desktop.arcgis.com/en/arcmap/latest/tools/data-management-toolbox/integrate.htm)).  Once all data are snapped/integrated, roads from each source are added to the output layer if they are not already in the output from the previous (higher priority) sources.
+
 
 ## Requirements
 
@@ -97,19 +109,7 @@ Note that this tool only supports downloading sources available through the Data
 When merge is complete, find output layer in `output` gdb specified in `config.yml`
 
 
-## Methodology
-
-- download all required source data from DataBC Catalogue
-- load all source data to PostGIS
-- in PostGIS, preprocess source road layers, creating lines from input road polyons and tiling all sources
-- dump sources road layers into a single gdb
-- looping through tiles (20k or 250k):
-    + use the ArcGIS [Integrate tool](http://resources.arcgis.com/en/help/main/10.2/index.html#//00170000002s000000) to conflate the roads into a single layer based on hierarchy specified in `sources.csv`
-    + with all linework within the tolerance of `Integrate` aligned in the various sources, remove lines present in higher priority sources from lower priority datasets using the `Erase` tool
-    + merge the resulting layers into a single output roads layer for the given tile
-- merge all tiles into a provincial roads layer
-
-## Output
+## Limitations
 As mentioned above, the analysis is very much an approximation. It works best in areas where roads are not duplicated between sources.
 These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance).
 
