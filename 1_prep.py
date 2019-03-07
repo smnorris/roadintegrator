@@ -335,6 +335,9 @@ def load(source_csv, alias, force_refresh):
 def preprocess(source_csv, alias, n_processes):
     """Prepare input road data
     """
+    # create output folder
+    if not os.path.exists(CONFIG["temp_data"]):
+        os.mkdir(CONFIG["temp_data"])
     db = pgdata.connect(CONFIG["db_url"], schema="public")
     sources = read_csv(source_csv)
     if alias:

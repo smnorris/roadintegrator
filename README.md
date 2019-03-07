@@ -84,19 +84,28 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py load
 
-3. Manually download any sources that are not publicly accessible and load to the working database (using the alias specified in `sources.csv`.
+3. Manually download any sources that are not publicly accessible and load to the working database (using the alias specified in `sources.csv`. For example:
+
+        $ ogr2ogr \
+          --config PG_USE_COPY YES \
+          -f PostgreSQL \
+          PG:"host=localhost user=postgres dbname=roadintegrator password=postgres" \
+          -lco OVERWRITE=YES \
+          -lco SCHEMA=public \
+          -lco GEOMETRY_NAME=geom \
+          -nln abr \
+          source_data/ABR.gdb \
+          ABR_ROAD_SECTION_LINE
 
 4. Preprocess (tile inputs and generate linear features from polygon inputs):
 
         $ python 1_prep.py preprocess
-Move the resulting `temp_data/prepped.gdb` to equivalent folder on a machine with ArcGIS 10.6/Python 2.7.
 
-5. Run the road integration:
+5. Move the resulting `temp_data/prepped.gdb` to equivalent folder on a machine with ArcGIS 10.6/Python 2.7. and then run the road integration:
 
         C:\path\to\project> python 2_integrate.py
-Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc.
 
-6. Merge the tiled outputs to create `integrated_roads.gdb`:
+6. Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc and then merge the tiled outputs to create `integrated_roads.gdb`:
 
         $ python 3_merge.py
 
