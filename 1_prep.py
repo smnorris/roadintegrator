@@ -185,7 +185,7 @@ def roadpoly2line(source, n_processes):
         sql = """CREATE TABLE {t}_tmp AS
             SELECT
               (ST_Dump(ST_Safe_Repair((ST_Dump(geom)).geom))).geom as geom
-            FROM {t}""".format(t=alias+"_src")
+            FROM {t}_src""".format(t=alias)
         db.execute(sql)
 
     # get a list of tiles present in the data
