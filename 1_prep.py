@@ -122,11 +122,6 @@ def tile(source, n_processes):
     alias = source["alias"]
     db = pgdata.connect(CONFIG["db_url"], schema="public")
 
-    # move input table to '_src'
-    if alias + "_src" not in db.tables:
-        sql = "ALTER TABLE {t} RENAME TO {t}_src".format(t=alias)
-        db.execute(sql)
-
     # get a list of tiles present in the data
     # (this takes a little while, so keep the result on hand)
     if alias + "_tiles" not in db.tables:
@@ -136,39 +131,45 @@ def tile(source, n_processes):
                  FROM tiles_20k a
                  INNER JOIN {src} b ON ST_Intersects(a.geom, b.geom)
                  ORDER BY a.map_tile""".format(
-            src=alias + "_src", out=alias + "_tiles"
+            src=alias + "_src",
+            out=alias + "_tiles"
         )
         db.execute(sql)
     tiles = [t for t in db[alias + "_tiles"].distinct("map_tile")]
 
-    # create empty output table
-    db[alias].drop()
-    fields = source["primary_key"] + "," + source["fields"].lower()
-    db.execute(
-        """CREATE TABLE {t} AS
-                  SELECT {f},
-                  ''::text as map_tile,
-                  ST_Multi(geom) as geom
-                  FROM {src}
-                  LIMIT 0
-               """.format(
-            t=alias, f=fields, src=alias + "_src"
+    # only re-run if necessary
+    if alias not in db.tables:
+        # create empty output table
+        fields = source["primary_key"] + "," + source["fields"].lower()
+        db.execute(
+            """CREATE TABLE {t} AS
+                      SELECT {f},
+                      ''::text as map_tile,
+                      ST_Multi(geom) as geom
+                      FROM {src}
+                      LIMIT 0
+                   """.format(
+                t=alias, f=fields, src=alias + "_src"
+            )
         )
-    )
 
-    lookup = {"src_table": alias + "_src", "out_table": alias, "fields": fields}
-    sql = db.build_query(db.queries["tile_roads"], lookup)
+        lookup = {
+            "src_table": alias + "_src",
+            "out_table": alias,
+            "fields": fields
+        }
+        sql = db.build_query(db.queries["tile_roads"], lookup)
 
-    # tile, clean
-    info(alias + ": tiling and cleaning")
-    func = partial(tiled_sql_geos, sql)
-    pool = multiprocessing.Pool(processes=n_processes)
-    results_iter = pool.imap_unordered(func, tiles)
-    with click.progressbar(results_iter, length=len(tiles)) as bar:
-        for _ in bar:
-            pass
-    pool.close()
-    pool.join()
+        # tile, clean
+        info(alias + ": tiling and cleaning")
+        func = partial(tiled_sql_geos, sql)
+        pool = multiprocessing.Pool(processes=n_processes)
+        results_iter = pool.imap_unordered(func, tiles)
+        with click.progressbar(results_iter, length=len(tiles)) as bar:
+            for _ in bar:
+                pass
+        pool.close()
+        pool.join()
 
 
 def roadpoly2line(source, n_processes):
@@ -177,11 +178,6 @@ def roadpoly2line(source, n_processes):
     alias = source["alias"]
     db = pgdata.connect(CONFIG["db_url"], schema="public")
 
-    # move input table to '_src'
-    if alias + "_src" not in db.tables:
-        sql = "ALTER TABLE {t} RENAME TO {t}_src".format(t=alias)
-        db.execute(sql)
-
     # repair geom and dump to singlepart
     # Note that we do not bother to keep any columns from source table
     if alias + "_tmp" not in db.tables:
@@ -189,9 +185,7 @@ def roadpoly2line(source, n_processes):
         sql = """CREATE TABLE {t}_tmp AS
             SELECT
               (ST_Dump(ST_Safe_Repair((ST_Dump(geom)).geom))).geom as geom
-            FROM {t}_src""".format(
-            t=alias
-        )
+            FROM {t}""".format(t=alias+"_src")
         db.execute(sql)
 
     # get a list of tiles present in the data
@@ -234,28 +228,29 @@ def roadpoly2line(source, n_processes):
         pool.close()
         pool.join()
 
-    # create output layer
-    db.execute(
-        """CREATE TABLE {t}
-                    ({t}_id SERIAL PRIMARY KEY,
-                     map_tile text,
-                     geom geometry)""".format(
-            t=alias
+    # only re-run in necessary
+    if alias not in db.tables:
+        # create output layer
+        db.execute(
+            """CREATE TABLE {t}
+                        ({t}_id SERIAL PRIMARY KEY,
+                         map_tile text,
+                         geom geometry)""".format(
+                t=alias
+            )
         )
-    )
-
-    lookup = {"src_table": alias + "_cleaned", "out_table": alias}
-    sql = db.build_query(db.queries["roadpoly2line"], lookup)
-    # process poly2line using SFCGAL backend
-    info(alias + ": generating road lines from polygons")
-    func = partial(tiled_sql_sfcgal, sql)
-    pool = multiprocessing.Pool(processes=n_processes)
-    results_iter = pool.imap_unordered(func, tiles)
-    with click.progressbar(results_iter, length=len(tiles)) as bar:
-        for _ in bar:
-            pass
-    pool.close()
-    pool.join()
+        lookup = {"src_table": alias + "_cleaned", "out_table": alias}
+        sql = db.build_query(db.queries["roadpoly2line"], lookup)
+        # process poly2line using SFCGAL backend
+        info(alias + ": generating road lines from polygons")
+        func = partial(tiled_sql_sfcgal, sql)
+        pool = multiprocessing.Pool(processes=n_processes)
+        results_iter = pool.imap_unordered(func, tiles)
+        with click.progressbar(results_iter, length=len(tiles)) as bar:
+            for _ in bar:
+                pass
+        pool.close()
+        pool.join()
 
 
 @click.group()
@@ -298,15 +293,19 @@ def load(source_csv, alias, force_refresh):
 
     # load sources where automated downloads are avaiable
     for source in [s for s in sources if s["manual_download"] != 'T']:
+        if source['preprocess_operation']:
+            table = source["alias"] + "_src"
+        else:
+            table = source["alias"]
         if force_refresh:
             db[source["alias"]].drop()
-        if source["alias"] not in db.tables:
+        if table not in db.tables:
             info("Downloading %s" % source["alias"])
             # Use bcdata bc2pg (ogr2ogr wrapper) to load the data to postgres
             command = [
                 "bcdata bc2pg {}".format(source["source_table"]),
                 "--schema public",
-                "--table {}".format(source["alias"]),
+                "--table {}".format(table),
                 "--db_url {}".format(CONFIG["db_url"]),
                 "--sortby {}".format(source["primary_key"]),
             ]
@@ -314,7 +313,8 @@ def load(source_csv, alias, force_refresh):
                 command.append('--query "{}"'.format(source["query"]))
             subprocess.call(" ".join(command), shell=True)
     for source in [s for s in sources if s["manual_download"] == 'T']:
-        click.echo("Load {} to db manually".format(source["alias"]))
+        if source["alias"] + "_src" not in db.tables:
+            click.echo("Load {} to db manually".format(source["alias"]))
 
 
 @cli.command()
@@ -332,7 +332,8 @@ def load(source_csv, alias, force_refresh):
     default=multiprocessing.cpu_count() - 1,
     help="Number of parallel processing threads to utilize",
 )
-def preprocess(source_csv, alias, n_processes):
+@click.option("--force_refresh", is_flag=True, default=False, help="Force preprocess of all inputs")
+def preprocess(source_csv, alias, n_processes, force_refresh):
     """Prepare input road data
     """
     # create output folder
@@ -344,6 +345,16 @@ def preprocess(source_csv, alias, n_processes):
         sources = [s for s in sources if s["alias"] == alias]
     # find sources noted for preprocessing
     sources = [s for s in sources if s["preprocess_operation"]]
+
+    # clean things up if forcing a refresh - delete any preprocess outputs
+    # and intermediate data
+    if force_refresh:
+        for source in sources:
+            for table in db.tables:
+                if table[-4:] != "_src" and table[:len(source["alias"])] == source["alias"]:
+                    click.echo("Dropping table {}".format(table))
+                    db[table].drop()
+
     for source in sources:
         info("Preprocessing %s" % source["alias"])
         # call noted preprocessing function

@@ -84,7 +84,7 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 1_prep.py load
 
-3. Manually download any sources that are not publicly accessible and load to the working database (using the alias specified in `sources.csv`. For example:
+3. Manually download any sources that are not publicly accessible and load to the working database (using the alias specified in `sources.csv` with the suffix `_src`. For example:
 
         $ ogr2ogr \
           --config PG_USE_COPY YES \
@@ -93,7 +93,7 @@ Note that this tool only supports downloading sources available through the Data
           -lco OVERWRITE=YES \
           -lco SCHEMA=public \
           -lco GEOMETRY_NAME=geom \
-          -nln abr \
+          -nln abr_src \
           source_data/ABR.gdb \
           ABR_ROAD_SECTION_LINE
 
