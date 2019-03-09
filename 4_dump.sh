@@ -43,3 +43,17 @@ ogr2ogr \
   FROM integrated_roads" \
   integrated_roads.gdb \
   "PG:host=localhost user=postgres dbname=roadintegrator password=postgres"
+
+ogr2ogr \
+  -f FileGDB \
+  -progress \
+  -update \
+  -nln bcgw_source_km \
+-sql "SELECT
+  bcgw_source,
+  round((sum(st_length(geom) / 1000)::numeric), 2)  as length_km
+FROM integrated_roads
+GROUP BY bcgw_source" \
+  integrated_roads.gdb \
+  "PG:host=localhost user=postgres dbname=roadintegrator password=postgres"
+
