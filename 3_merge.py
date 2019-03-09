@@ -82,7 +82,8 @@ def merge():
                 bcgw_source,
                 bcgw_extraction_date,
                 map_tile,
-                {f}
+                {f},
+                Shape
                 FROM {lyr}""".format(
                 f=", ".join(query_fields), lyr=in_layer
             )
