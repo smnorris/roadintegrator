@@ -109,7 +109,7 @@ Note that this tool only supports downloading sources available through the Data
 
         $ python 3_merge.py
 
-7. Dump output `integrated_roads` layer to final .gdb. Note that this script does not use the `sources.csv` as a guide, it must be edited if any changes to input data are made:
+7. Dump output `integrated_roads` layer to final .gdb. Note that this script does read `sources.csv` or `config.yml`, the script must be modified if any changes are made to input data and/or the postgres connection.
 
         $ ./4_dump.sh
 
