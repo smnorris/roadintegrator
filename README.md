@@ -105,9 +105,14 @@ Note that this tool only supports downloading sources available through the Data
 
         C:\path\to\project> python 2_integrate.py
 
-6. Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc and then merge the tiled outputs to create `integrated_roads.gdb`:
+6. Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc and merge the tiled outputs in postgres:
 
         $ python 3_merge.py
+
+7. Dump output `integrated_roads` layer to final .gdb. Note that this script does not use the `sources.csv` as a guide, it must be edited if any changes to input data are made:
+
+        $ ./4_dump.sh
+
 
 
 

@@ -41,5 +41,5 @@ ogr2ogr \
     og_permits_proponent AS \"OG_PERMITS_PROPONENT\",
     geom
   FROM integrated_roads" \
-  integrated_roads \
+  integrated_roads.gdb \
   "PG:host=localhost user=postgres dbname=roadintegrator password=postgres"
