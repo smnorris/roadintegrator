@@ -16,19 +16,19 @@ The output dataset contains line work from many sources, some representing built
 
 ## Requirements
 
-Three scripts are provided:
+Four scripts are provided:
 
-For `1_prep.py` and `3_merge.py`:
+For `1_prep.py`, `3_merge.py`, `4_dump.sh`:
 
 - Python 3 (tested with v3.7)
 - GDAL/OGR (tested with v2.4.0)
-- PostgreSQL (tested with v10.6)
-- PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5)
+- PostgreSQL (tested with v11.2)
+- PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5.1)
 
 For `2_integrate.py`:
 
-- ArcGIS Desktop (tested with v10.6)
-- Python 2
+- ArcGIS Desktop (tested with v10.6.1)
+- Python 2.7
 
 
 ## Setup

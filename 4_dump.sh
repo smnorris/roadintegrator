@@ -2,6 +2,7 @@ ogr2ogr \
   -f FileGDB \
   -progress \
   -nlt MULTILINESTRING \
+  -nln integrated_roads \
   -sql "SELECT
     bcgw_source AS \"BCGW_SOURCE\",
     bcgw_extraction_date AS \"BCGW_EXTRACTION_DATE\",
