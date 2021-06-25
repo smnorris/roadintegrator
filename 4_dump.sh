@@ -1,8 +1,10 @@
 ogr2ogr \
   -f FileGDB \
   -progress \
-  -nlt MULTILINESTRING \
+  -nlt LINESTRING \
   -nln integrated_roads \
+  -lco GEOMETRY_NULLABLE=NO \
+  -lco GEOMETRY_NAME=Shape \
   -sql "SELECT
     bcgw_source AS \"BCGW_SOURCE\",
     bcgw_extraction_date AS \"BCGW_EXTRACTION_DATE\",
@@ -40,7 +42,7 @@ ogr2ogr \
     og_permits_road_type_desc AS \"OG_PERMITS_ROAD_TYPE_DESC\",
     og_permits_activity_approval_date AS \"OG_PERMITS_ACTIVITY_APPROVAL_DATE\",
     og_permits_proponent AS \"OG_PERMITS_PROPONENT\",
-    geom
+    ST_MakeValid((ST_Dump(geom)).geom) as \"Shape\"
   FROM integrated_roads" \
   integrated_roads.gdb \
   "PG:host=localhost user=postgres dbname=roadintegrator password=postgres"
