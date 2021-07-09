@@ -8,7 +8,8 @@ psql -f sql/create_output.sql
 psql -f sql/ST_FilterRings.sql
 
 # --------------------------------------
-# process tiles for each data source in parallel
+# Process each data source, in descending order of priority
+# Each data source is chunked into tiles, which are loaded in parallel
 # --------------------------------------
 
 # DRA

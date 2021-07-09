@@ -85,68 +85,21 @@ As long as you don't remove this container, it will retain all the data you put 
 
           docker start postgis
 
-
-## Configuration
-
-
-### sources.csv
-To modify the source layers used in the analysis, edit the file referenced as `source_csv` in `config.yml`. The default source data list file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **priority** column. Columns are as follows:
-
-| COLUMN                 | DESCRIPTION                                                                                                                                                                            |
-|------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance).
-| **manual_download**        | 'Y' if the data must be manually downloaded
-| **name**                   | Full name of the source layer
-| **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)
-| **source_table**           | Full SCHEMA.TABLE object name of source BCGW table
-| **primary_key**            | The source layer's primary key
-| **fields**                 | The fields in the source layer to retain in the output, in order to be written to output layer
-| **url**                    | DataBC Catalogue URL
-| **query**                  | A valid CQL or ECQL query for filtering the data (https://docs.geoserver.org/stable/en/user/tutorials/cql/cql_tutorial.html)
-| **preprocess_operation**   | Pre-processing operation to apply to layer (`tile` and `roadpoly2line` are the only supported operations)
-
-Note that this tool only supports downloading sources available through the DataBC Catalogue.
-
 ## Usage
 
-1. Create the postgres database if it doesn't already exist:
+1. Manually download As Built Roads to `source_data/ABR.gdb/ABR_ROAD_SECTION_LINE`
 
-        $ python 1_prep.py create-db
+2. Download all other sources and load all data to the postgres db:
 
-2. Download publicly accessible data:
+        ./load.sh
 
-        $ python 1_prep.py load
+3. Process all roads:
 
-3. Manually download any sources that are not publicly accessible and load to the working database (using the alias specified in `sources.csv` with the suffix `_src`. For example:
+        ./process.sh
 
-        $ ogr2ogr \
-          --config PG_USE_COPY YES \
-          -f PostgreSQL \
-          PG:"host=localhost user=postgres dbname=roadintegrator password=postgres" \
-          -lco OVERWRITE=YES \
-          -lco SCHEMA=public \
-          -lco GEOMETRY_NAME=geom \
-          -nln abr_src \
-          source_data/ABR.gdb \
-          ABR_ROAD_SECTION_LINE
+4. Dump output to file:
 
-4. Preprocess (tile inputs and generate linear features from polygon inputs):
-
-        $ python 1_prep.py preprocess
-
-5. Move the resulting `temp_data/prepped.gdb` to equivalent folder on a machine with ArcGIS 10.6/Python 2.7. and then run the road integration:
-
-        C:\path\to\project> python 2_integrate.py
-
-6. Move the resulting `temp_data/tiles` back to equivalent folder on the machine with Python 3 / GDAL etc and merge the tiled outputs in postgres:
-
-        $ python 3_merge.py
-
-7. Dump output `integrated_roads` layer to final .gdb. Note that this script does read `sources.csv` or `config.yml`, the script must be modified if any changes are made to input data and/or the postgres connection.
-
-        $ ./4_dump.sh
-
-
+        ./dump.sh
 
 
 ## Duplications
