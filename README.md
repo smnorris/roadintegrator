@@ -1,13 +1,27 @@
 # roadintegrator
 
-Collect and combine various BC road data sources in order of priority.
+Quckly merge various BC road data sources into a single layer.
 
-When a lower priority road feature is within 7m (or otherwise specified) of a higher priority road, it is snapped to the the location of the higher priority road. Once all sources are snapped/integrated, roads from each source are added to the output in order of priority - if the road is not already present.
+## Sources
 
+
+|Priority | Name                        | Table                        |
+|---------|-----------------------------|------------------------------|
+| 1 |[Digital Road Atlas (DRA)](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads) | WHSE_BASEMAPPING.DRA_DGTL_ROAD_ATLAS_MPAR_SP |
+| 2 | [Forest Tenure Road Section Lines](https://catalogue.data.gov.bc.ca/dataset/forest-tenure-road-section-lines) | WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW |
+| 3 | [RESULTS - Forest Cover Inventory - roads](https://catalogue.data.gov.bc.ca/dataset/results-forest-cover-inventory) | WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW |
+| 4 | As Built Roads (ABR) | WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE |
+| 5 | [OGC Petroleum Development Roads Pre-2006](https://catalogue.data.gov.bc.ca/dataset/ogc-petroleum-development-roads-pre-2006-public-version) | WHSE_MINERAL_TENURE.OG_PETRLM_DEV_RDS_PRE06_PUB_SP |
+| 6 | [Oil and Gas Commission Road Segment Permits](https://catalogue.data.gov.bc.ca/dataset/oil-and-gas-commission-road-segment-permits) | WHSE_MINERAL_TENURE.OG_ROAD_SEGMENT_PERMIT_SP |
+| 7 | [Oil and Gas Commission Road Right of Way Permits](https://catalogue.data.gov.bc.ca/dataset/oil-and-gas-commission-road-right-of-way-permits) | WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP |
+
+## Method
+
+Roads are loaded to the output layer in order of decreasing priority. When a lower priority road feature is within 7m of an already loaded (higher priority road), it is snapped to the the location of the higher priority road and only the difference between the features is added to the output.
 
 ## Limitations and Caveats
 
-The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts is NOT a comprehensive conflation/merge of the input road layers, it is a quick approximation. All outputs are specifically for cumulative effects and strategic level analysis - they should not be considered positionally accurate.
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts **IS NOT A COMPRENSIVE CONFLATION/MERGE** of the input road layers, it is a quick approximation. All outputs are specifically for cumulative effects and strategic level analysis - they should not be considered positionally accurate.
 
 Several specific issues will lead to over-representation of roads:
 
@@ -15,17 +29,12 @@ Several specific issues will lead to over-representation of roads:
 - roads are present in the tenure layers that have not been built
 - roads may have been decomissioned, overgrown or become otherwise impassible
 
-Additionally, the various road data sources are not 100% comprehensive, there may be roads present in the landscape that are included in the analysis/output product.
+Additionally, the various road data sources are not 100% comprehensive, there may be roads present in the landscape that are not included in the analysis and output product.
 
-## Requirements
-
-- PostgreSQL >= 13 (tested with v13.3)
-- PostGIS >= 3.1
-- Geos >= 3.9
 
 ## Installation
 
-### Python dependencies
+### Processing environment
 
 1. Install Anaconda or [miniconda](https://docs.conda.io/en/latest/miniconda.html)
 
@@ -36,16 +45,22 @@ Additionally, the various road data sources are not 100% comprehensive, there ma
         git clone https://github.com/smnorris/roadintegrator.git
         cd roadintegrator
 
-4. Edit the postgres connection environment variables in `environment.yml` to match your database connection as necessary.
+4. If necessary, edit the postgres connection environment variables in `environment.yml` to match your database connection parameters (the provided default is set to `localhost` with port `5435` to avoid collision with existing local databases).
 
-5. Create and activate the environment:
+5. Create environment/load dependencies, and activate the environment:
 
         conda env create -f environment.yml
         conda activate roadintegrator
 
 ### Database
 
-Optional - if you do not already have a local PostgreSQL 13 / PostGIS 3.1 database.
+The analysis requires:
+
+- PostgreSQL >= 13.3
+- PostGIS >= 3.1
+- GEOS >= 3.9
+
+If you do not already have a database meeting these requirements, use Docker to quickly set one up:
 
 1. Download and install Docker using the appropriate link for your OS:
     - [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
@@ -79,15 +94,15 @@ Optional - if you do not already have a local PostgreSQL 13 / PostGIS 3.1 databa
 
         psql -c "CREATE DATABASE roadintegrator" postgres
 
-Above creates and runs a container called `postgis` with a postgres server and db available on the port specified by the $PGPORT environment variable (configurable in `environment.yml`)
+Above creates and runs a container called `postgis` with a postgres server and db available on the port specified by the `$PGPORT` environment variable (configurable in `environment.yml`)
 
-As long as you don't remove this container, it will retain all the data you put in it. If you have shut down Docker or the container, start it up again with this command:
+As long as you do not remove this container, it will retain all the data you put in it. If you have shut down Docker or the container, start it up again with this command:
 
           docker start postgis
 
 ## Usage
 
-1. Manually download As Built Roads to `source_data/ABR.gdb/ABR_ROAD_SECTION_LINE`
+1. Manually extract `WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE` from BCGW, save to file `source_data/ABR.gdb/ABR_ROAD_SECTION_LINE`
 
 2. Download all other sources and load all data to the postgres db:
 
@@ -103,7 +118,8 @@ As long as you don't remove this container, it will retain all the data you put 
 
 
 ## Duplications
-As mentioned above, the analysis is very much an approximation. It works best in areas where roads are not duplicated between sources.
+As mentioned above, this analysis is very much a rough approximation. It works well in areas where roads are not duplicated between sources or where source road networks are near-coincident.
+
 These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance).
 
 ### three input layers
