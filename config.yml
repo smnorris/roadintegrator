@@ -1,9 +1,0 @@
-# Edit processing configuration here
-source_data: source_data                # path to folder for holding downloads
-temp_data: temp_data                    # path to folder for temp .gdb files
-source_csv: sources.csv                 # file containing list of source layers
-tolerance: 7                            # integrate tolerance (m)
-grid: tiles_20k                         # alias of tile layer in datalist
-tile_column: map_tile                   # tile name field in tile layer
-# postgresql db SQLAlchemy connection string
-db_url: postgresql://postgres:postgres@localhost:5432/roadintegrator

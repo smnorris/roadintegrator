@@ -1,67 +1,100 @@
 # roadintegrator
 
-Collect and combine various BC road data sources in order of priority. When a lower priority road feature is within 7m (or otherwise specified) of a higher priority road, it is snapped to the the location of the higher priority road using the ArcGIS [Integrate tool](http://desktop.arcgis.com/en/arcmap/latest/tools/data-management-toolbox/integrate.htm).  Once all sources are snapped/integrated, roads from each source are added to the output in order of priority - if the road is not already present.
+Collect and combine various BC road data sources in order of priority.
+
+When a lower priority road feature is within 7m (or otherwise specified) of a higher priority road, it is snapped to the the location of the higher priority road. Once all sources are snapped/integrated, roads from each source are added to the output in order of priority - if the road is not already present.
 
 
 ## Limitations and Caveats
 
-The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The road integration process used in these scripts is an approximation and the output created is specifically for cumulative effects analysis. It is intended for strategic level analysis and should not be considered positionally accurate or used for navigation.
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts is NOT a comprehensive conflation/merge of the input road layers, it is a quick approximation. All outputs are specifically for cumulative effects and strategic level analysis - they should not be considered positionally accurate.
 
-The output dataset contains line work from many sources, some representing built roads and some representing road tenures. Potential issues include:
+Several specific issues will lead to over-representation of roads:
 
-- duplicates of the same road defined in different sources that are not within the integration distance (7m) (see [Duplications](#Duplications) below)
-- roads that have not been built
-- roads that are overgrown or otherwise impassible
-- existing roads that are not mapped in any of the noted sources will not be included (ie, some roads may be missed)
+- the same road present in different source layers will only be de-duplicated by the tool where the features are nearer than the specified tolerance, see [Duplications](#Duplications) below)
+- roads are present in the tenure layers that have not been built
+- roads may have been decomissioned, overgrown or become otherwise impassible
+
+Additionally, the various road data sources are not 100% comprehensive, there may be roads present in the landscape that are included in the analysis/output product.
 
 ## Requirements
 
-Four scripts are provided:
+- PostgreSQL >= 13 (tested with v13.3)
+- PostGIS >= 3.1
+- Geos >= 3.9
 
-For `1_prep.py`, `3_merge.py`, `4_dump.sh`:
+## Installation
 
-- Python 3 (tested with v3.7)
-- GDAL/OGR (tested with v2.4.0)
-- PostgreSQL (tested with v11.2)
-- PostGIS with [SFCGAL](http://postgis.net/2015/10/25/postgis_sfcgal_extension/) (tested with v2.5.1)
+### Python dependencies
 
-For `2_integrate.py`:
+1. Install Anaconda or [miniconda](https://docs.conda.io/en/latest/miniconda.html)
 
-- ArcGIS Desktop (tested with v10.6.1)
-- Python 2.7
+2. Open a [conda command prompt](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html)
 
+3. Clone the repository, navigate to the project folder, create and activate provided environment:
 
-## Setup
+        git clone https://github.com/smnorris/roadintegrator.git
+        cd roadintegrator
 
-1. On data preparation machine (with GDAL, Postgres), clone the repository,
-create virtualenv, install Python dependencies:
+4. Edit the postgres connection environment variables in `environment.yml` to match your database connection as necessary.
 
-        $ git clone https://github.com/bcgov/roadintegrator.git
-        $ cd roadintegrator
-        $ virtualenv venv
-        $ venv\Scripts\activate
-        $ pip install -r requirements.txt
+5. Create and activate the environment:
 
-2. On ArcGIS machine, clone the repositiory, install dependencies. Also, the tool requires the [64bit ArcGIS Python](http://desktop.arcgis.com/en/arcmap/latest/analyze/executing-tools/64bit-background.htm) - integrate will fail with topology errors using the 32bit Python. The PATH setting below is for ArcGIS 10.6 on a BC Gov GTS server, modify as required:
+        conda env create -f environment.yml
+        conda activate roadintegrator
 
-        C:\> git clone https://github.com/smnorris/roadintegrator.git
-        C:\> cd roadintegrator
-        C:\roadintegrator> pip install --user click
-        C:\roadintegrator> pip install --user pyaml
-        C:\roadintegrator> SET PATH="E:\sw_nt\Python27\ArcGISx6410.6";"E:\sw_nt\Python27\ArcGISx6410.6\Scripts";%PATH%
+### Database
+
+Optional - if you do not already have a local PostgreSQL 13 / PostGIS 3.1 database.
+
+1. Download and install Docker using the appropriate link for your OS:
+    - [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
+    - [Windows](https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe)
+
+2. Get a Postgres docker image with a PostGIS 3.1 / Geos 3.9 enabled database:
+
+        docker pull postgis/postgis:13-master
+
+3. Create a container with the postgis image, using the database name and port specified by the `PGDATABASE` and `PGPORT` environment variables:
+
+        # Linux/Mac
+
+        docker run --name postgis \
+          -e POSTGRES_PASSWORD=postgres \
+          -e POSTGRES_USER=postgres \
+          -e PG_DATABASE=$PGDATABASE \
+          -p $PGPORT:5432 \
+          -d postgis/postgis:13-master
+
+        # Windows
+
+        docker run --name postgis ^
+          -e POSTGRES_PASSWORD=postgres ^
+          -e POSTGRES_USER=postgres ^
+          -e PG_DATABASE=%PGDATABASE% ^
+          -p %PGPORT%:5432 ^
+          -d postgis/postgis:13-master
+
+4. Create the database
+
+        psql -c "CREATE DATABASE roadintegrator" postgres
+
+Above creates and runs a container called `postgis` with a postgres server and db available on the port specified by the $PGPORT environment variable (configurable in `environment.yml`)
+
+As long as you don't remove this container, it will retain all the data you put in it. If you have shut down Docker or the container, start it up again with this command:
+
+          docker start postgis
 
 
 ## Configuration
 
-### config.yml
-To modify processing tolerances and default database/files/folders, edit `config.yml`.
 
 ### sources.csv
 To modify the source layers used in the analysis, edit the file referenced as `source_csv` in `config.yml`. The default source data list file is the provided `sources.csv`. This table defines all layers in the analysis and can be modified to customize the analysis. Note that order of the rows is not important, the script will sort the rows by the **priority** column. Columns are as follows:
 
 | COLUMN                 | DESCRIPTION                                                                                                                                                                            |
 |------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance). Sources required for processing but not included in the roads hierarchy (eg tiles) should be give a hierarchy value of `0`.
+| **priority**               | An integer defining the priority of the source. Lower priority roads will be snapped to higher priority roads (within the specified tolerance).
 | **manual_download**        | 'Y' if the data must be manually downloaded
 | **name**                   | Full name of the source layer
 | **alias**                  | A unique underscore separated value used for coding the various road sources (eg `dra`)

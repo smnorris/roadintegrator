@@ -1,5 +1,0 @@
-pyaml
-Click
-pgdata
-bcdata
-fiona
