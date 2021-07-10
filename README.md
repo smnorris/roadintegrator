@@ -17,11 +17,11 @@ Quckly merge various BC road data sources into a single layer.
 
 ## Method
 
-Roads are loaded to the output layer in order of decreasing priority. When a lower priority road feature is within 7m of an already loaded (higher priority road), it is snapped to the the location of the higher priority road and only the difference between the features is added to the output.
+Roads are loaded to the output table in order of decreasing priority. When a lower priority road feature is within 7m of an already loaded (higher priority) road, it is snapped to the higher priority road and only the difference between the features is added to the output.
 
 ## Limitations and Caveats
 
-The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts **IS NOT A COMPRENSIVE CONFLATION/MERGE** of the input road layers, it is a quick approximation. All outputs are specifically for cumulative effects and strategic level analysis - they should not be considered positionally accurate.
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts **IS NOT A COMPRENSIVE CONFLATION/MERGE** of the input road layers, it is a quick approximation. All outputs are specifically for cumulative effects and strategic level analysis. With the exception of the DRA features, the data should not be considered positionally accurate.
 
 Several specific issues will lead to over-representation of roads:
 
