@@ -35,6 +35,31 @@ ogr2ogr \
 psql -c "INSERT INTO bcdata (table_name, date_downloaded)
    SELECT 'whse_basemapping.transport_line', CURRENT_TIMESTAMP"
 
+# include the code tables
+ogr2ogr \
+  -f PostgreSQL \
+  "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
+  -overwrite \
+  -nln whse_basemapping.transport_line_type_code \
+  source_data/dgtl_road_atlas.gdb \
+  TRANSPORT_LINE_TYPE_CODE
+
+ogr2ogr \
+  -f PostgreSQL \
+  "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
+  -overwrite \
+  -nln whse_basemapping.transport_line_surface_code \
+  source_data/dgtl_road_atlas.gdb \
+  TRANSPORT_LINE_SURFACE_CODE
+
+ogr2ogr \
+  -f PostgreSQL \
+  "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
+  -overwrite \
+  -nln whse_basemapping.transport_line_divided_code \
+  source_data/dgtl_road_atlas.gdb \
+  TRANSPORT_LINE_DIVIDED_CODE
+
 # FTEN (active and retired)
 bcdata bc2pg WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW \
   --fid MAP_LABEL \

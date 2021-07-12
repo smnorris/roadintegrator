@@ -6,7 +6,6 @@ DROP TABLE IF EXISTS integratedroads;
 CREATE TABLE integratedroads (
     integratedroads_id serial primary key,
     bcgw_source character varying,
-    bcgw_extraction_date character varying,
     map_tile character varying,
     transport_line_id integer,
     map_label character varying,
