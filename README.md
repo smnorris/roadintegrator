@@ -106,13 +106,17 @@ As long as you do not remove this container, it will retain all the data you put
 
 2. Download all other sources and load all data to the postgres db:
 
-        ./load.sh
+        ./01_load.sh
 
-3. Process all roads:
+3. Convert polygon road sources to lines:
+
+        ./02_preprocess.sh
+
+4. Process all roads, create output view `integratedroads_vw`:
 
         ./process.sh
 
-4. Dump output to file:
+5. Dump output view to file:
 
         ./dump.sh
 

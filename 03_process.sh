@@ -65,4 +65,4 @@ psql -c "CREATE INDEX ON integratedroads (og_petrlm_dev_rd_pre06_pub_id)"
 psql -c "CREATE INDEX ON integratedroads (og_road_segment_permit_id)"
 
 # create a view that links output geoms back to source attribs
-psql -f sql/inegratedroads_vw.sql
+psql -f sql/integratedroads_vw.sql
