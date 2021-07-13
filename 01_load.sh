@@ -33,7 +33,9 @@ ogr2ogr \
 # Because we are not loading this table via bc2pg, no record is added to bcdata table.
 # Do this manually here so we know what day this data was extracted
 psql -c "INSERT INTO bcdata (table_name, date_downloaded)
-   SELECT 'whse_basemapping.transport_line', CURRENT_TIMESTAMP"
+   SELECT 'whse_basemapping.transport_line', CURRENT_TIMESTAMP
+   ON CONFLICT (table_name) DO
+   UPDATE SET date_downloaded = EXCLUDED.date_downloaded;"
 
 # include the code tables
 ogr2ogr \
