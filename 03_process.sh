@@ -12,49 +12,49 @@ psql -f sql/create_integratedroads.sql
 # DRA
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/01_dra.sql -v tile={1}
 
 # FTEN - Active
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/02_ften_active.sql -v tile={1}
 
 # FTEN - Retired
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/03_ften_retired.sql -v tile={1}
 
 # Results
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/04_results.sql -v tile={1}
 
 # ABR
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/05_abr.sql -v tile={1}
 
 # OG development permits pre06
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/06_og_dev_pre06.sql -v tile={1}
 
 # OG permits
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/07_og_permits.sql -v tile={1}
 
 # og permit right-of-ways
 time psql -tXA \
 -c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
+    WHERE map_tile LIKE '092%'" \
     | parallel psql -f sql/08_og_permits_row.sql -v tile={1}
 
 # after loading, index the output for faster joins back to sources

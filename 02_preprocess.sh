@@ -8,6 +8,10 @@ set -euxo pipefail
 # make sure the FilterRings function is present
 psql -f sql/ST_FilterRings.sql
 
+# Approx Medial Axis will bail on self-intersecting (but valid) polys
+# Ignore them by wrapping them in an exception handler
+psql -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
+
 # -----
 # convert RESULTS polygon roads to lines
 # -----
@@ -19,9 +23,11 @@ psql -c "CREATE TABLE results
   geom geometry(Linestring, 3005)
 )"
 time psql -tXA \
--c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
-    | parallel psql -f sql/results2line.sql -v tile={1}
+-c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid" \
+    | parallel psql -f sql/roadpoly2line.sql \
+        -v tile={1} \
+        -v in_table=whse_forest_vegetation.rslt_forest_cover_inv_svw \
+        -v out_table=results
 
 # -----
 # convert OG permit right of ways (poly) to lines
@@ -34,6 +40,11 @@ psql -c "CREATE TABLE og_permits_row
   geom geometry(Linestring, 3005)
 )"
 time psql -tXA \
--c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid
-    WHERE map_tile LIKE '092C%'" \
-    | parallel psql -f sql/og_permits_row2line.sql -v tile={1}
+-c "SELECT DISTINCT t.map_tile
+    FROM whse_basemapping.bcgs_20k_grid t
+    INNER JOIN whse_mineral_tenure.og_road_area_permit_sp r
+    ON ST_Intersects(t.geom, r.geom)" \
+     | parallel psql -f sql/roadpoly2line.sql \
+       -v tile={1} \
+       -v in_table=whse_mineral_tenure.og_road_area_permit_sp \
+       -v out_table=og_permits_row
