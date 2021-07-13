@@ -12,8 +12,8 @@ psql -c "CREATE EXTENSION postgis_sfcgal"
 # bc2pg depends on DATABASE_URL variable - set it here because it is not set in the conda env
 DATABASE_URL=postgresql://$PGUSER@$PGHOST:$PGPORT/$PGDATABASE
 
-# use 250k tiles for chunking the processing
-bcdata bc2pg WHSE_BASEMAPPING.NTS_250K_GRID \
+# use 20k tiles for chunking the processing
+bcdata bc2pg WHSE_BASEMAPPING.BCGS_20K_GRID \
   --fid MAP_TILE
 
 # DRA
@@ -84,7 +84,9 @@ ogr2ogr -f PostgreSQL \
 # Because we are not loading this table via bc2pg, no record is added to bcdata table.
 # Do this manually here so we know what day this data was extracted
 psql -c "INSERT INTO bcdata (table_name, date_downloaded)
-   SELECT 'whse_forest_tenure.abr_road_section_line', CURRENT_TIMESTAMP"
+   SELECT 'whse_forest_tenure.abr_road_section_line', CURRENT_TIMESTAMP
+   ON CONFLICT (table_name) DO
+   UPDATE SET date_downloaded = EXCLUDED.date_downloaded;"
 
 # Oil and Gas Dev, pre06
 bcdata bc2pg WHSE_MINERAL_TENURE.OG_PETRLM_DEV_RDS_PRE06_PUB_SP \
