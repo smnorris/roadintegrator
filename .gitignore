@@ -1,0 +1,4 @@
+# Ignore data dumps
+*.gpkg
+*.gdb
+*.zip
