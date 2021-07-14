@@ -9,11 +9,9 @@ CREATE TABLE integratedroads (
     map_tile character varying,
     transport_line_id integer,
     map_label character varying,
-    forest_cover_id integer,
     road_section_line_id integer,
     og_petrlm_dev_rd_pre06_pub_id integer,
     og_road_segment_permit_id integer,
-    og_road_area_permit_id integer,
     geom geometry(Linestring, 3005)
 );
 

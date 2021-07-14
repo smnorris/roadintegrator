@@ -43,17 +43,19 @@ snapped AS
 INSERT INTO integratedroads
 (
   map_tile,
-  'WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP' AS bcgw_source, -- record source because we do not have an id
-  --og_road_area_permit_id,
+  bcgw_source, -- record source because we do not have an id
   geom
 )
 SELECT
   :'tile' AS map_tile,
---f.og_road_area_permit_id,
+  'WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP' as bcgw_source, -- record source because we do not have an id
+  geom
+FROM
+(
+SELECT
   f.geom
 FROM (
   SELECT
-    --a.og_road_area_permit_id,
     (ST_Dump(ST_Difference(a.geom, b.geom, 1))).geom as geom
   FROM snapped a
   INNER JOIN within_tolerance b
@@ -63,11 +65,9 @@ WHERE st_length(geom) > 7
 -- include features that do not get snapped (>7m away from existing road)
 UNION ALL
 SELECT
-  :'tile' AS map_tile,
-  'WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP' as bcgw_source, -- record source because we do not have an id
---  n.og_road_area_permit_id,
   n.geom
 FROM src n
 LEFT OUTER JOIN snapped s
 ON n.id = s.id
-WHERE s.id IS NULL;
+WHERE s.id IS NULL
+) as b;

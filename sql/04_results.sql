@@ -44,31 +44,29 @@ INSERT INTO integratedroads
 (
   map_tile,
   bcgw_source,
-  --forest_cover_id,
   geom
 )
 SELECT
   :'tile' AS map_tile,
   'WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW' as bcgw_source, -- record source because we do not have an id
-  --f.forest_cover_id,
-  f.geom
+  geom
 FROM (
   SELECT
---    a.forest_cover_id,
-    (ST_Dump(ST_Difference(a.geom, b.geom, 1))).geom as geom
-  FROM snapped a
-  INNER JOIN within_tolerance b
-  ON a.id = b.id
-  ) as f
-WHERE st_length(geom) > 7
--- include features that do not get snapped (>7m away from existing road)
-UNION ALL
-SELECT
-  :'tile' AS map_tile,
-  'WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW' as bcgw_source, -- record source because we do not have an id
-  --n.forest_cover_id,
-  n.geom
-FROM src n
-LEFT OUTER JOIN snapped s
-ON n.id = s.id
-WHERE s.id IS NULL;
+    f.geom
+  FROM (
+    SELECT
+      (ST_Dump(ST_Difference(a.geom, b.geom, 1))).geom as geom
+    FROM snapped a
+    INNER JOIN within_tolerance b
+    ON a.id = b.id
+    ) as f
+  WHERE st_length(geom) > 7
+  -- include features that do not get snapped (>7m away from existing road)
+  UNION ALL
+  SELECT
+    n.geom
+  FROM src n
+  LEFT OUTER JOIN snapped s
+  ON n.id = s.id
+  WHERE s.id IS NULL
+) as b;

@@ -23,7 +23,7 @@ WITH tile AS (
     FROM whse_basemapping.transport_line r
     INNER JOIN whse_basemapping.bcgs_20k_grid t
     ON ST_Intersects(r.geom, t.geom)
-    WHERE t.map_tile = :'tile'
+    WHERE t.map_tile LIKE :'tile'||'%'
   ) as f
   WHERE ST_Dimension(geom) = 1
 )

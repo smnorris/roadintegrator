@@ -22,8 +22,13 @@ psql -c "CREATE TABLE results
   map_tile character varying,
   geom geometry(Linestring, 3005)
 )"
-time psql -tXA \
--c "SELECT map_tile FROM whse_basemapping.bcgs_20k_grid" \
+psql -tXA \
+-c "SELECT DISTINCT t.map_tile
+    FROM whse_basemapping.bcgs_20k_grid t
+    INNER JOIN whse_forest_vegetation.rslt_forest_cover_inv_svw r
+    ON ST_Intersects(t.geom, r.geom)
+    WHERE ST_ISvalid(r.geom)
+    ORDER BY t.map_tile" \
     | parallel psql -f sql/roadpoly2line.sql \
         -v tile={1} \
         -v in_table=whse_forest_vegetation.rslt_forest_cover_inv_svw \
@@ -39,11 +44,12 @@ psql -c "CREATE TABLE og_permits_row
   map_tile character varying,
   geom geometry(Linestring, 3005)
 )"
-time psql -tXA \
+psql -tXA \
 -c "SELECT DISTINCT t.map_tile
     FROM whse_basemapping.bcgs_20k_grid t
     INNER JOIN whse_mineral_tenure.og_road_area_permit_sp r
-    ON ST_Intersects(t.geom, r.geom)" \
+    ON ST_Intersects(t.geom, r.geom)
+    ORDER BY t.map_tile" \
      | parallel psql -f sql/roadpoly2line.sql \
        -v tile={1} \
        -v in_table=whse_mineral_tenure.og_road_area_permit_sp \

@@ -42,6 +42,14 @@ ogr2ogr \
   -f PostgreSQL \
   "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
   -overwrite \
+  -nln whse_basemapping.transport_line_structure_code \
+  source_data/dgtl_road_atlas.gdb \
+  TRANSPORT_LINE_STRUCTURE_CODE
+
+ogr2ogr \
+  -f PostgreSQL \
+  "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
+  -overwrite \
   -nln whse_basemapping.transport_line_type_code \
   source_data/dgtl_road_atlas.gdb \
   TRANSPORT_LINE_TYPE_CODE
@@ -53,14 +61,6 @@ ogr2ogr \
   -nln whse_basemapping.transport_line_surface_code \
   source_data/dgtl_road_atlas.gdb \
   TRANSPORT_LINE_SURFACE_CODE
-
-ogr2ogr \
-  -f PostgreSQL \
-  "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
-  -overwrite \
-  -nln whse_basemapping.transport_line_divided_code \
-  source_data/dgtl_road_atlas.gdb \
-  TRANSPORT_LINE_DIVIDED_CODE
 
 # FTEN (active and retired)
 bcdata bc2pg WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW \
@@ -101,20 +101,3 @@ bcdata bc2pg WHSE_MINERAL_TENURE.OG_ROAD_SEGMENT_PERMIT_SP \
 # Oil and Gas permits, road right of way (polygons)
 bcdata bc2pg WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP \
   --fid OG_ROAD_AREA_PERMIT_ID
-
-# create output table
-psql -c "DROP TABLE IF EXISTS integratedroads"
-psql -c "CREATE TABLE integratedroads (
-    integratedroads_id serial primary key,
-    bcgw_source character varying,
-    bcgw_extraction_date character varying,
-    map_tile character varying,
-    transport_line_id integer,
-    map_label character varying,
-    forest_cover_id integer,
-    road_section_line_id integer,
-    og_petrlm_dev_rd_pre06_pub_id integer,
-    og_road_segment_permit_id integer,
-    og_road_area_permit_id integer,
-    geom geometry(Linestring, 3005)
-);"
