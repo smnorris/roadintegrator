@@ -57,10 +57,10 @@ GROUP BY p.priority, r.bcgw_source, to_char(r.bcgw_extraction_date, 'YYYY-MM-DD'
 )
 SELECT
   priority::text,
-  bcgw_source,
-  bcgw_extraction_date,
+  LOWER(bcgw_source) as source,
+  bcgw_extraction_date as extraction_date,
   to_char(ROUND(length_km::numeric), 'FM9,999,999') AS length_km,
-  ROUND(((length_km / t.total_km ) * 100)::numeric, 2) as length_pct
+  ROUND(((length_km / t.total_km ) * 100)::numeric, 2)::text as length_pct
 FROM len_per_source, total t
 UNION ALL
 SELECT
@@ -68,5 +68,5 @@ SELECT
   '' as bcgw_source,
   'TOTAL' as bcgw_extraction_date,
   to_char(total_km, 'FM999,999,999') as total_km,
-  100 as length_pct
+  '' length_pct
 FROM total;" | sed 's/+/|/g' | sed 's/^/|/' | sed 's/$/|/' |  grep -v rows | grep -v '||'

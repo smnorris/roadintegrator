@@ -132,15 +132,15 @@ These diagrams illustrate a problematic sample area, showing three input road la
 ### resulting output
 ![inputs](img/roadintegrator_output.png)
 
-### Output summary
+## Output summary
 
-| priority |                    source                     | extraction_date | length_km | length_pct |
-|----------|----------------------------------------------------|----------------------|-----------|------------|
-| 1        | WHSE_BASEMAPPING.TRANSPORT_LINE                    | 2021-07-13           | 792,033   |      80.99|
-| 2        | WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW     | 2021-07-13           | 99,139    |      10.14|
-| 3        | WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW   | 2021-07-13           | 72,281    |       7.39|
-| 4        | WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE           | 2021-07-13           | 3,644     |       0.37|
-| 5        | WHSE_MINERAL_TENURE.OG_PETRLM_DEV_RDS_PRE06_PUB_SP | 2021-07-13           | 904       |       0.09|
-| 6        | WHSE_MINERAL_TENURE.OG_ROAD_SEGMENT_PERMIT_SP      | 2021-07-13           | 6,847     |       0.70|
-| 7        | WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP         | 2021-07-13           | 3,039     |       0.31|
-|          |                                                    | TOTAL                | 977,885   |        100|
+| priority |                       source                       | extraction_date | length_km | length_pct |
+|----------|----------------------------------------------------|-----------------|-----------:|------------:|
+| 1        | whse_basemapping.transport_line                    | 2021-07-13      | 792,033   | 80.99|
+| 2        | whse_forest_tenure.ften_road_section_lines_svw     | 2021-07-13      | 99,139    | 10.14|
+| 3        | whse_forest_vegetation.rslt_forest_cover_inv_svw   | 2021-07-13      | 72,281    | 7.39|
+| 4        | whse_forest_tenure.abr_road_section_line           | 2021-07-13      | 3,644     | 0.37|
+| 5        | whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp | 2021-07-13      | 904       | 0.09|
+| 6        | whse_mineral_tenure.og_road_segment_permit_sp      | 2021-07-13      | 6,847     | 0.70|
+| 7        | whse_mineral_tenure.og_road_area_permit_sp         | 2021-07-13      | 3,039     | 0.31|
+|          |                                                    | TOTAL           | 977,885   | |
