@@ -132,3 +132,15 @@ These diagrams illustrate a problematic sample area, showing three input road la
 ### resulting output
 ![inputs](img/roadintegrator_output.png)
 
+### Output summary
+
+| priority |                    source                     | extraction_date | length_km | length_pct |
+|----------|----------------------------------------------------|----------------------|-----------|------------|
+| 1        | WHSE_BASEMAPPING.TRANSPORT_LINE                    | 2021-07-13           | 792,033   |      80.99|
+| 2        | WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW     | 2021-07-13           | 99,139    |      10.14|
+| 3        | WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW   | 2021-07-13           | 72,281    |       7.39|
+| 4        | WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE           | 2021-07-13           | 3,644     |       0.37|
+| 5        | WHSE_MINERAL_TENURE.OG_PETRLM_DEV_RDS_PRE06_PUB_SP | 2021-07-13           | 904       |       0.09|
+| 6        | WHSE_MINERAL_TENURE.OG_ROAD_SEGMENT_PERMIT_SP      | 2021-07-13           | 6,847     |       0.70|
+| 7        | WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP         | 2021-07-13           | 3,039     |       0.31|
+|          |                                                    | TOTAL                | 977,885   |        100|
