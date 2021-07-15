@@ -37,7 +37,7 @@ ORDER BY bcgw_source" \
 
 zip -r integratedroads.gpkg.zip integratedroads.gpkg
 
-# also generate some markdown for readme
+# Generate summary table as markdown for last section of README
 # https://gist.github.com/rastermanden/94c4a663176c41248f3e
 psql -c "WITH total AS
 (
