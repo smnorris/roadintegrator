@@ -6,7 +6,7 @@ ogr2ogr \
     -f GPKG \
     -progress \
     -nlt LINESTRING \
-    -nln integrated_roads \
+    -nln integratedroads \
     -lco GEOMETRY_NULLABLE=NO \
     -sql "SELECT * FROM integratedroads_vw" \
     integratedroads.gpkg \

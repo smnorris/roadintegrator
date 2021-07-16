@@ -77,6 +77,19 @@ time psql -tXA \
 -c "SELECT DISTINCT map_tile FROM og_permits_row" \
     | parallel psql -f sql/08_og_permits_row.sql -v tile={1}
 
+# The st_segmentized geoms from DRA used to improve snapping are redundant
+# and some tools cannot handle this level of data density. Delete the DRA geoms
+# and replace with source features
+psql -c "DELETE FROM integratedroads WHERE transport_line_id IS NOT NULL"
+time psql -tXA \
+-c "SELECT DISTINCT
+      substring(t.map_tile from 1 for 4) as map_tile
+    FROM whse_basemapping.bcgs_20k_grid t
+    INNER JOIN whse_basemapping.transport_line r
+    ON ST_Intersects(t.geom, r.geom)
+    ORDER BY substring(t.map_tile from 1 for 4)" \
+    | parallel psql -f sql/dra_src.sql -v tile={1}
+
 # index the foreign keys for faster joins back to source tables
 psql -c "CREATE INDEX ON integratedroads (transport_line_id)"
 psql -c "CREATE INDEX ON integratedroads (map_label)"
