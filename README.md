@@ -117,11 +117,11 @@ As long as you do not remove this container, it will retain all the data you put
 
 4. Process all roads, create output view `integratedroads_vw`:
 
-        ./process.sh
+        ./03_process.sh
 
 5. Dump output view to file:
 
-        ./dump.sh
+        ./04_dump.sh
 
 
 ## Duplications
