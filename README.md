@@ -29,7 +29,10 @@ Several specific issues will lead to over-representation of roads:
 - roads are present in the tenure layers that have not been built
 - roads may have been decomissioned, overgrown or become otherwise impassible
 
-Additionally, the various road data sources are not 100% comprehensive, there may be roads present in the landscape that are not included in the analysis and output product.
+Additional notes:
+
+- the various road data sources are not 100% comprehensive, there may be roads present in the landscape that are not included in the analysis and output product
+- because processing is tiled by BCGS 20k tile, any portion of road falling outside of these tiles will not be included (tile edges do not exactly match the surveyed BC border)
 
 
 ## Installation
