@@ -6,30 +6,34 @@
 -- get roads
 -- get features of interest from tile
 WITH src AS (
-  SELECT
-    og_petrlm_dev_rd_pre06_pub_id,
-    map_tile,
-    (ST_Dump(geom)).geom as geom
+  SELECT row_number() over() as id, *
   FROM (
     SELECT
-     r.og_petrlm_dev_rd_pre06_pub_id,
-     t.map_tile,
-      CASE
-        WHEN ST_CoveredBy(r.geom, t.geom) THEN ST_Force2D(r.geom)
-        ELSE ST_Force2D(ST_Intersection(t.geom, r.geom))
-      END AS geom
-    FROM whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp r
-    INNER JOIN whse_basemapping.bcgs_20k_grid t
-    ON ST_Intersects(r.geom, t.geom)
-    WHERE t.map_tile = :'tile'
-  ) as f
-  WHERE ST_Dimension(geom) = 1
+      og_petrlm_dev_rd_pre06_pub_id,
+      map_tile,
+      (ST_Dump(geom)).geom as geom
+    FROM (
+      SELECT
+       r.og_petrlm_dev_rd_pre06_pub_id,
+       t.map_tile,
+        CASE
+          WHEN ST_CoveredBy(r.geom, t.geom) THEN ST_Force2D(r.geom)
+          ELSE ST_Force2D(ST_Intersection(t.geom, r.geom))
+        END AS geom
+      FROM whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp r
+      INNER JOIN whse_basemapping.bcgs_20k_grid t
+      ON ST_Intersects(r.geom, t.geom)
+      WHERE t.map_tile = :'tile'
+    ) as f
+    WHERE ST_Dimension(geom) = 1
+  ) as b
 ),
 
 -- clean the data a bit more, snapping endpoints to same-source features within 5m
 snapped_endpoints AS
 (
   SELECT 
+    a.id,
     a.og_petrlm_dev_rd_pre06_pub_id,
     st_distance(st_endpoint(a.geom), b.geom) as dist_end,
     st_distance(st_startpoint(a.geom), b.geom) as dist_start,
@@ -53,7 +57,7 @@ noded AS
       (st_dump(st_node(st_union(COALESCE(s.geom, t.geom))))).geom as geom 
     FROM src t
     LEFT JOIN snapped_endpoints s
-    ON t.og_petrlm_dev_rd_pre06_pub_id = s.og_petrlm_dev_rd_pre06_pub_id
+    ON t.id = s.id
     ) AS f
 ),
 

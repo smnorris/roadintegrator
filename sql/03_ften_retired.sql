@@ -5,31 +5,35 @@
 
 -- get only active ften roads for the tile
 WITH src AS (
-  SELECT
-    map_label,
-    map_tile,
-    (ST_Dump(geom)).geom as geom
+  SELECT row_number() over() as id, *
   FROM (
     SELECT
-     r.map_label,
-     t.map_tile,
-      CASE
-        WHEN ST_CoveredBy(r.geom, t.geom) THEN ST_Force2D(r.geom)
-        ELSE ST_Force2D(ST_Intersection(t.geom, r.geom))
-      END AS geom
-    FROM whse_forest_tenure.ften_road_section_lines_svw r
-    INNER JOIN whse_basemapping.bcgs_20k_grid t
-    ON ST_Intersects(r.geom, t.geom)
-    WHERE t.map_tile = :'tile'
-    AND r.life_cycle_status_code = 'RETIRED'
-  ) as f
-  WHERE ST_Dimension(geom) = 1
+      map_label,
+      map_tile,
+      (ST_Dump(geom)).geom as geom
+    FROM (
+      SELECT
+       r.map_label,
+       t.map_tile,
+        CASE
+          WHEN ST_CoveredBy(r.geom, t.geom) THEN ST_Force2D(r.geom)
+          ELSE ST_Force2D(ST_Intersection(t.geom, r.geom))
+        END AS geom
+      FROM whse_forest_tenure.ften_road_section_lines_svw r
+      INNER JOIN whse_basemapping.bcgs_20k_grid t
+      ON ST_Intersects(r.geom, t.geom)
+      WHERE t.map_tile = :'tile'
+      AND r.life_cycle_status_code = 'RETIRED'
+    ) as f
+    WHERE ST_Dimension(geom) = 1
+  ) as b
 ),
 
 -- clean the data a bit more, snapping endpoints to same-source features within 5m
 snapped_endpoints AS
 (
   SELECT 
+    a.id,
     a.map_label,
     st_distance(st_endpoint(a.geom), b.geom) as dist_end,
     st_distance(st_startpoint(a.geom), b.geom) as dist_start,
@@ -45,18 +49,17 @@ snapped_endpoints AS
 -- node new intersections created above
 noded AS
 (
-  SELECT 
-    row_number() over() as id, 
-    geom 
+  SELECT
+    row_number() over() as id,
+    geom
   FROM (
-    SELECT 
-      (st_dump(st_node(st_union(COALESCE(s.geom, t.geom))))).geom as geom 
+    SELECT
+      (st_dump(st_node(st_union(COALESCE(s.geom, t.geom))))).geom as geom
     FROM src t
     LEFT JOIN snapped_endpoints s
-    ON t.map_label = s.map_label
+    ON t.id = s.id
     ) AS f
 ),
-
 -- get the attributes back
 noded_attrib AS
 (
