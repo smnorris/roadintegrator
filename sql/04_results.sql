@@ -1,6 +1,6 @@
 -- -----------------------
 -- name: results!
--- Convert results road polys to line and load to output, snapping to existing roads
+-- Snap results roads to higher priority roads, insert difference
 -- -----------------------
 
 -- extract features from tile
