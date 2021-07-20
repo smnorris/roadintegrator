@@ -17,7 +17,7 @@ Quckly merge various BC road data sources into a single layer.
 
 ## Method
 
-Roads are loaded to the output table in order of decreasing priority. When a lower priority road feature is within 7m of an already loaded (higher priority) road, it is snapped to the higher priority road and only the difference between the features is added to the output.
+Roads are loaded to the output table in order of decreasing priority. Portions of lower priority roads within 7m of a higher priority road are not included.
 
 ## Limitations and Caveats
 
@@ -25,7 +25,7 @@ The authoritative source for built roads in British Columbia is the [Digital Roa
 
 Several specific issues will lead to over-representation of roads:
 
-- the same road present in different source layers will only be de-duplicated by the tool where the features are nearer than the specified tolerance, see [Duplications](#Duplications) below)
+- the same road present in different source layers will only be de-duplicated when features less than 7m apart, see [Duplications](#Duplications) below)
 - roads are present in the tenure layers that have not been built
 - roads may have been decomissioned, overgrown or become otherwise impassible
 
