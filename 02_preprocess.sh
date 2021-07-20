@@ -2,9 +2,30 @@
 set -euxo pipefail
 
 # --------------------------------------
-# To make scripting easier, create separate tables for FTEN active / retired roads
+# Extract FTEN active/retired roads into separate tables and clean the features slightly
+# (snap endpoints, renode)
 # --------------------------------------
-psql -f sql/ften_active.sql
+psql -c  "DROP TABLE IF EXISTS ften_active;"
+
+psql -c "CREATE TABLE ften_active
+( ften_active_id serial primary key,
+  map_label character varying,
+  map_tile character varying,
+  geom geometry(Geometry,3005));"
+
+time psql -tXA \
+-c "SELECT DISTINCT map_tile
+    FROM whse_basemapping.bcgs_20k_grid t
+    INNER JOIN whse_forest_tenure.ften_road_section_lines_svw r
+    ON ST_Intersects(t.geom, r.geom)
+    WHERE life_cycle_status_code = 'ACTIVE'
+    ORDER BY map_tile" \
+    | parallel psql -f sql/ften_active.sql -v tile={1}
+
+
+psql -c "CREATE INDEX on ften_active USING GIST (geom);"
+
+
 psql -f sql/ften_retired.sql
 
 # --------------------------------------
