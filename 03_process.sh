@@ -2,14 +2,11 @@
 set -euxo pipefail
 
 # create output table
+psql -c "DROP TABLE IF EXISTS integratedroads CASCADE"
 psql -f sql/create_integratedroads.sql
 
-# --------------------------------------
-# Process each data source, in descending order of priority
-# Each data source is chunked into tiles, which are loaded in parallel
-# --------------------------------------
 
-# DRA (process by 250k tile, processing is minor)
+# DRA (just dump everything in, these features remain unchanged)
 time psql -tXA \
 -c "SELECT DISTINCT
       substring(t.map_tile from 1 for 4) as map_tile
@@ -17,79 +14,33 @@ time psql -tXA \
     INNER JOIN whse_basemapping.transport_line r
     ON ST_Intersects(t.geom, r.geom)
     ORDER BY substring(t.map_tile from 1 for 4)" \
-    | parallel psql -f sql/01_dra.sql -v tile={1}
+    | parallel psql -f sql/load_dra.sql -v tile={1}
+#WHERE map_tile LIKE '103P%'
+# define all source tables and their primary keys in array
+# bash arrays are like older python dicts, they are not ordered...
+# https://stackoverflow.com/questions/29161323/how-to-keep-associative-array-order
+declare -A tables;      declare -a ordered;
+tables["ften_active"]="map_label"; ordered+=("ften_active")
+tables["ften_retired"]="map_label"; ordered+=("ften_retired")
+tables["results"]="results_id"; ordered+=("results")
+tables["whse_forest_tenure.abr_road_section_line"]="road_section_line_id"; ordered+=("whse_forest_tenure.abr_road_section_line")
+tables["whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp"]="og_petrlm_dev_rd_pre06_pub_id"; ordered+=("whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp")
+tables["whse_mineral_tenure.og_road_segment_permit_sp"]="og_road_segment_permit_id"; ordered+=("whse_mineral_tenure.og_road_segment_permit_sp")
+tables["og_permits_row"]="og_permits_row_id"; ordered+=("og_permits_row")
 
-# process all additional sources by 20k tile
-# FTEN - Active
-time psql -tXA \
--c "SELECT DISTINCT t.map_tile
-    FROM whse_basemapping.bcgs_20k_grid t
-    INNER JOIN whse_forest_tenure.ften_road_section_lines_svw r
-    ON ST_Intersects(t.geom, r.geom)
-    WHERE r.life_cycle_status_code = 'ACTIVE'
-    ORDER BY t.map_tile" \
-    | parallel psql -f sql/02_ften_active.sql -v tile={1}
+for source_table in "${ordered[@]}"
+  do
+    echo "Processing: $source_table"
+    psql -tXA \
+    -c "SELECT DISTINCT t.map_tile
+        FROM whse_basemapping.bcgs_20k_grid t
+        INNER JOIN $source_table r
+        ON ST_Intersects(t.geom, r.geom)
+        ORDER BY t.map_tile" \
+        | parallel psql -f sql/load_difference.sql -v tile={1} -v src_roads=$source_table -v pk=${tables[$source_table]}
+  done
 
-# FTEN - Retired
-time psql -tXA \
--c "SELECT DISTINCT t.map_tile
-    FROM whse_basemapping.bcgs_20k_grid t
-    INNER JOIN whse_forest_tenure.ften_road_section_lines_svw r
-    ON ST_Intersects(t.geom, r.geom)
-    WHERE r.life_cycle_status_code = 'RETIRED'
-    ORDER BY t.map_tile" \
-    | parallel psql -f sql/03_ften_retired.sql -v tile={1}
-
-# Results
-time psql -tXA \
--c "SELECT DISTINCT map_tile FROM results" \
-    | parallel psql -f sql/04_results.sql -v tile={1}
-
-# ABR
-time psql -tXA \
--c "SELECT DISTINCT t.map_tile
-    FROM whse_basemapping.bcgs_20k_grid t
-    INNER JOIN whse_forest_tenure.abr_road_section_line r
-    ON ST_Intersects(t.geom, r.geom)
-    ORDER BY t.map_tile" \
-    | parallel psql -f sql/05_abr.sql -v tile={1}
-
-# OG development permits pre06
-time psql -tXA \
--c "SELECT DISTINCT t.map_tile
-    FROM whse_basemapping.bcgs_20k_grid t
-    INNER JOIN whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp r
-    ON ST_Intersects(t.geom, r.geom)
-    ORDER BY t.map_tile" \
-    | parallel psql -f sql/06_og_dev_pre06.sql -v tile={1}
-
-# OG permits
-time psql -tXA \
--c "SELECT DISTINCT t.map_tile
-    FROM whse_basemapping.bcgs_20k_grid t
-    INNER JOIN whse_mineral_tenure.og_road_segment_permit_sp r
-    ON ST_Intersects(t.geom, r.geom)
-    ORDER BY t.map_tile" \
-    | parallel psql -f sql/07_og_permits.sql -v tile={1}
-
-# og permit right-of-ways
-time psql -tXA \
--c "SELECT DISTINCT map_tile FROM og_permits_row" \
-    | parallel psql -f sql/08_og_permits_row.sql -v tile={1}
-
-# The st_segmentized geoms from DRA used to improve snapping are redundant
-# and some tools cannot handle this level of data density. Delete the DRA geoms
-# and replace with source features
-psql -c "DELETE FROM integratedroads WHERE transport_line_id IS NOT NULL"
-time psql -tXA \
--c "SELECT DISTINCT
-      substring(t.map_tile from 1 for 4) as map_tile
-    FROM whse_basemapping.bcgs_20k_grid t
-    INNER JOIN whse_basemapping.transport_line r
-    ON ST_Intersects(t.geom, r.geom)
-    ORDER BY substring(t.map_tile from 1 for 4)" \
-    | parallel psql -f sql/dra_src.sql -v tile={1}
-
+#       WHERE t.map_tile LIKE '103P%'
 # index the foreign keys for faster joins back to source tables
 psql -c "CREATE INDEX ON integratedroads (transport_line_id)"
 psql -c "CREATE INDEX ON integratedroads (map_label)"

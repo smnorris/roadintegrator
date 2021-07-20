@@ -37,5 +37,6 @@ INSERT INTO integratedroads
 SELECT
   transport_line_id,
   map_tile,
-  ST_Segmentize(geom, 10) as geom
+  geom
+  --ST_Segmentize(geom, 10) as geom
 FROM tile;

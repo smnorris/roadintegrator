@@ -2,6 +2,12 @@
 set -euxo pipefail
 
 # --------------------------------------
+# To make scripting easier, create separate tables for FTEN active / retired roads
+# --------------------------------------
+psql -f sql/ften_active.sql
+psql -f sql/ften_retired.sql
+
+# --------------------------------------
 # Preprocess the polygon road sources, converting to lines
 # --------------------------------------
 
@@ -18,7 +24,7 @@ psql -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
 psql -c "DROP TABLE IF EXISTS results"
 psql -c "CREATE TABLE results
 (
-  id serial primary key,
+  results_id serial primary key,
   map_tile character varying,
   geom geometry(Linestring, 3005)
 )"
@@ -33,6 +39,7 @@ psql -tXA \
         -v tile={1} \
         -v in_table=whse_forest_vegetation.rslt_forest_cover_inv_svw \
         -v out_table=results
+psql -c "CREATE INDEX ON results USING GIST (geom)"
 
 # -----
 # convert OG permit right of ways (poly) to lines
@@ -40,7 +47,7 @@ psql -tXA \
 psql -c "DROP TABLE IF EXISTS og_permits_row"
 psql -c "CREATE TABLE og_permits_row
 (
-  id serial primary key,
+  og_permits_row_id serial primary key,
   map_tile character varying,
   geom geometry(Linestring, 3005)
 )"
@@ -54,3 +61,4 @@ psql -tXA \
        -v tile={1} \
        -v in_table=whse_mineral_tenure.og_road_area_permit_sp \
        -v out_table=og_permits_row
+psql -c "CREATE INDEX ON og_permits_row USING GIST (geom)"
