@@ -30,6 +30,7 @@ SELECT
   dra.structured_name_1                     AS dra_name_full,
   dra.structured_name_1_id                  AS dra_road_name_id,
   dra.capture_date                          AS dra_data_capture_date,
+  dra.total_number_of_lanes                 AS dra_total_number_of_lanes,
   i.map_label                               AS ften_map_label,
   ften.forest_file_id                       AS ften_forest_file_id,
   ften.road_section_id                      AS ften_road_section_id,
