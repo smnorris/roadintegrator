@@ -21,7 +21,7 @@ Roads are loaded to the output table in order of decreasing priority. Portions o
 
 ## Limitations and Caveats
 
-The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts **IS NOT A COMPRENSIVE CONFLATION/MERGE** of the input road layers, it is a quick approximation. All outputs are specifically for cumulative effects and strategic level analysis. With the exception of the DRA features, the data should not be considered positionally accurate.
+The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts **IS NOT A COMPRENSIVE CONFLATION/MERGE** of the input road layers, it is a quick approximation. The intent of the processing is to retain all input features not covered by a higher priority road - due to the nature of duplication in BC road data, the output will always be an over-representation of roads.
 
 Several specific issues will lead to over-representation of roads:
 
@@ -147,3 +147,14 @@ These diagrams illustrate a problematic sample area, showing three input road la
 | 6        | whse_mineral_tenure.og_road_segment_permit_sp      | 2021-07-13      | 7,449     | 0.79|
 | 7        | whse_mineral_tenure.og_road_area_permit_sp         | 2021-07-13      | 145       | 0.02|
 |          |                                                    | TOTAL           | 942,826   | |
+
+## Alternative approaches
+
+Road network conflation is a common task, many additional approaches and tools are available. This list provides a starting point for additional reading:
+
+- RoadMatcher JUMP/OpenJump plugin [source](https://github.com/ssinger/roadmatcher), [wiki](http://wiki.openstreetmap.org/wiki/RoadMatcher)
+- [PostGIS topology](http://blog.mathieu-leplatre.info/use-postgis-topologies-to-clean-up-road-networks.html)
+- [Average Path Length Similarity](https://medium.com/the-downlinq/spacenet-road-detection-and-routing-challenge-part-ii-apls-implementation-92acd86f4094)
+- [Tiled similarity scoring](https://medium.com/strava-engineering/activity-grouping-the-heart-of-a-social-network-for-athletes-865751f7dca)
+- [Hootenanny - a conflation tool](https://github.com/ngageoint/hootenanny)
+- [Graph based merging](https://open.library.ubc.ca/cIRcle/collections/ubctheses/24/items/1.0398182)
