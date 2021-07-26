@@ -17,7 +17,11 @@ Quckly merge various BC road data sources into a single layer.
 
 ## Method
 
-Roads are loaded to the output table in order of decreasing priority. Portions of lower priority roads within 7m of a higher priority road are not included.
+First, sources are preprocessed:
+- centerlines of polygon road sources are approximated
+- FTEN roads are cleaned slightly, snapping endpoints within 7m to other same-source roads
+
+Next, all roads are loaded to the output table in order of decreasing priority. Portions of lower priority roads within 7m of a higher priority road are deleted. Where the endpoint of a remaining lower priority road is within 7m of a higher prioirity road, the endpoint of the lower priority road is snapped to the closest point on the higher priority road.
 
 ## Limitations and Caveats
 

@@ -12,7 +12,6 @@ psql -c "CREATE TABLE ften_active
   map_label character varying,
   map_tile character varying,
   geom geometry(Geometry,3005));"
-
 time psql -tXA \
 -c "SELECT DISTINCT map_tile
     FROM whse_basemapping.bcgs_20k_grid t
@@ -21,12 +20,24 @@ time psql -tXA \
     WHERE life_cycle_status_code = 'ACTIVE'
     ORDER BY map_tile" \
     | parallel psql -f sql/ften_active.sql -v tile={1}
-
-
 psql -c "CREATE INDEX on ften_active USING GIST (geom);"
 
+psql -c  "DROP TABLE IF EXISTS ften_retired;"
+psql -c "CREATE TABLE ften_retired
+( ften_retired_id serial primary key,
+  map_label character varying,
+  map_tile character varying,
+  geom geometry(Geometry,3005));"
+time psql -tXA \
+-c "SELECT DISTINCT map_tile
+    FROM whse_basemapping.bcgs_20k_grid t
+    INNER JOIN whse_forest_tenure.ften_road_section_lines_svw r
+    ON ST_Intersects(t.geom, r.geom)
+    WHERE life_cycle_status_code = 'retired'
+    ORDER BY map_tile" \
+    | parallel psql -f sql/ften_retired.sql -v tile={1}
 
-psql -f sql/ften_retired.sql
+psql -c "CREATE INDEX on ften_retired USING GIST (geom);"
 
 # --------------------------------------
 # Preprocess the polygon road sources, converting to lines

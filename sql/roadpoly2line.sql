@@ -40,6 +40,22 @@ FROM (
 WHERE ST_Dimension(geom) = 2
 ),
 
+-- merge the road polys so intersections are better represented
+merged AS
+(
+  SELECT
+    (ST_Dump(                         -- singlepart
+      ST_Union(                       -- merge
+        ST_MakeValid(                 -- clean
+          ST_ForceRHR(                -- clean
+            ST_FilterRings(geom, 10)  -- remove holes <10m area
+          )
+        )
+      )
+    )).geom as geom
+  FROM tile
+),
+
 -- convert to lines, merge the lines
 lines AS
 (
@@ -49,15 +65,10 @@ lines AS
   FROM (
     SELECT
       (ST_Dump(
-        ST_ApproximateMedialAxisIgnoreErrors(
-          ST_MakeValid(
-            ST_ForceRHR(
-              ST_FilterRings(geom, 10)  -- remove holes <10m area
-          )
+        ST_ApproximateMedialAxisIgnoreErrors(geom)
         )
-      ))).geom as geom
-    FROM tile
-    WHERE ST_Area(geom) > 10  -- don't bother processing polys <10m area
+      ).geom as geom
+    FROM merged
   ) as f
 )
 

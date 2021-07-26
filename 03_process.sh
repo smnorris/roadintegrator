@@ -5,8 +5,7 @@ set -euxo pipefail
 psql -c "DROP TABLE IF EXISTS integratedroads CASCADE"
 psql -f sql/create_integratedroads.sql
 
-
-# DRA (just dump everything in, these features remain unchanged)
+# load DRA (just dump everything in, these features remain unchanged)
 time psql -tXA \
 -c "SELECT DISTINCT
       substring(t.map_tile from 1 for 4) as map_tile
@@ -15,7 +14,8 @@ time psql -tXA \
     ON ST_Intersects(t.geom, r.geom)
     ORDER BY substring(t.map_tile from 1 for 4)" \
     | parallel psql -f sql/load_dra.sql -v tile={1}
-#WHERE map_tile LIKE '103P%'
+
+
 # define all source tables and their primary keys in array
 # bash arrays are like older python dicts, they are not ordered...
 # https://stackoverflow.com/questions/29161323/how-to-keep-associative-array-order
@@ -40,7 +40,6 @@ for source_table in "${ordered[@]}"
         | parallel psql -f sql/load_difference.sql -v tile={1} -v src_roads=$source_table -v pk=${tables[$source_table]}
   done
 
-#       WHERE t.map_tile LIKE '103P%'
 # index the foreign keys for faster joins back to source tables
 psql -c "CREATE INDEX ON integratedroads (transport_line_id)"
 psql -c "CREATE INDEX ON integratedroads (map_label)"
