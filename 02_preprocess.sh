@@ -11,7 +11,7 @@ psql -c "CREATE TABLE ften_active
 ( ften_active_id serial primary key,
   map_label character varying,
   map_tile character varying,
-  geom geometry(Geometry,3005));"
+  geom geometry(Linestring,3005));"
 time psql -tXA \
 -c "SELECT DISTINCT map_tile
     FROM whse_basemapping.bcgs_20k_grid t
@@ -27,13 +27,13 @@ psql -c "CREATE TABLE ften_retired
 ( ften_retired_id serial primary key,
   map_label character varying,
   map_tile character varying,
-  geom geometry(Geometry,3005));"
+  geom geometry(Linestring,3005));"
 time psql -tXA \
 -c "SELECT DISTINCT map_tile
     FROM whse_basemapping.bcgs_20k_grid t
     INNER JOIN whse_forest_tenure.ften_road_section_lines_svw r
     ON ST_Intersects(t.geom, r.geom)
-    WHERE life_cycle_status_code = 'retired'
+    WHERE life_cycle_status_code = 'RETIRED'
     ORDER BY map_tile" \
     | parallel psql -f sql/ften_retired.sql -v tile={1}
 

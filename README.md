@@ -29,7 +29,7 @@ The authoritative source for built roads in British Columbia is the [Digital Roa
 
 Several specific issues will lead to over-representation of roads:
 
-- the same road present in different source layers will only be de-duplicated when features less than 7m apart, see [Duplications](#Duplications) below)
+- the same road present in different source layers will only be de-duplicated when features are less than 7m apart, see [Duplications](#Duplications) below)
 - roads are present in the tenure layers that have not been built
 - roads may have been decomissioned, overgrown or become otherwise impassible
 
