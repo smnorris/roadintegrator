@@ -16,15 +16,7 @@ DATABASE_URL=postgresql://$PGUSER@$PGHOST:$PGPORT/$PGDATABASE
 # Note that this table is only used for reporting - priority is encoded in 03_process.sh
 # only by the order in which the sources are processed.
 psql -c "CREATE TABLE source_priority (priority integer, bcgw_source character varying);"
-psql -c "INSERT INTO source_priority
-VALUES
-(1,'whse_basemapping.transport_line'),
-(2,'whse_forest_tenure.ften_road_section_lines_svw'),
-(3,'whse_forest_vegetation.rslt_forest_cover_inv_svw'),
-(4,'whse_forest_tenure.abr_road_section_line'),
-(5,'whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp'),
-(6,'whse_mineral_tenure.og_road_segment_permit_sp'),
-(7,'whse_mineral_tenure.og_road_area_permit_sp');"
+psql -c "\copy source_priority FROM 'data/source_priority.csv' delimiter ',' csv header"
 
 # use 20k tiles for chunking the processing
 bcdata bc2pg WHSE_BASEMAPPING.BCGS_20K_GRID \
