@@ -143,14 +143,14 @@ These diagrams illustrate a problematic sample area, showing three input road la
 
 | priority |                       source                       | extraction_date | length_km | length_pct |
 |----------|----------------------------------------------------|-----------------|-----------:|------------:|
-| 1        | whse_basemapping.transport_line                    | 2021-07-13      | 792,033   | 84.01|
-| 2        | whse_forest_tenure.ften_road_section_lines_svw     | 2021-07-13      | 91,857    | 9.74|
-| 3        | whse_forest_vegetation.rslt_forest_cover_inv_svw   | 2021-07-13      | 47,966    | 5.09|
-| 4        | whse_forest_tenure.abr_road_section_line           | 2021-07-13      | 2,409     | 0.26|
-| 5        | whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp | 2021-07-13      | 967       | 0.10|
-| 6        | whse_mineral_tenure.og_road_segment_permit_sp      | 2021-07-13      | 7,449     | 0.79|
-| 7        | whse_mineral_tenure.og_road_area_permit_sp         | 2021-07-13      | 145       | 0.02|
-|          |                                                    | TOTAL           | 942,826   | |
+| 1        | whse_basemapping.transport_line                    | 2021-07-27      | 792,033   | 82.97|
+| 2        | whse_forest_tenure.ften_road_section_lines_svw     | 2021-07-27      | 101,721   | 10.66|
+| 3        | whse_forest_vegetation.rslt_forest_cover_inv_svw   | 2021-07-27      | 49,331    | 5.17|
+| 4        | whse_forest_tenure.abr_road_section_line           | 2021-07-13      | 2,620     | 0.27|
+| 5        | whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp | 2021-07-27      | 1,006     | 0.11|
+| 6        | whse_mineral_tenure.og_road_segment_permit_sp      | 2021-07-27      | 7,737     | 0.81|
+| 7        | whse_mineral_tenure.og_road_area_permit_sp         | 2021-07-27      | 189       | 0.02|
+|          |                                                    | TOTAL           | 954,638   | |
 
 ## Alternative approaches
 
