@@ -131,7 +131,7 @@ noded_attrib AS
   ORDER BY n.id, ST_Length(ST_Intersection(n.geom, t.geom)) DESC
 )
 
-INSERT INTO ften_active
+INSERT INTO ften_retired
 (map_tile, map_label, geom)
 SELECT
   map_tile,
