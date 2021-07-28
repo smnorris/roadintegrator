@@ -32,8 +32,8 @@ bcdata bc2pg WHSE_BASEMAPPING.BCGS_20K_GRID \
 
 # DRA
 # Get compressed DRA from ftp rather than via WFS uncompressed GeoJSON - much faster/more reliable
-wget --trust-server-names -qNP source_data ftp://ftp.geobc.gov.bc.ca/sections/outgoing/bmgs/DRA_Public/dgtl_road_atlas.gdb.zip
-unzip -qun -d source_data "source_data/dgtl_road_atlas.gdb.zip"
+wget --trust-server-names -qNP data ftp://ftp.geobc.gov.bc.ca/sections/outgoing/bmgs/DRA_Public/dgtl_road_atlas.gdb.zip
+unzip -qun -d data "data/dgtl_road_atlas.gdb.zip"
 ogr2ogr \
   -f PostgreSQL \
   "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
@@ -42,7 +42,7 @@ ogr2ogr \
   -lco FID=transport_line_id \
   -nln whse_basemapping.transport_line \
   -where "TRANSPORT_LINE_SURFACE_CODE <> 'B'" \
-  source_data/dgtl_road_atlas.gdb \
+  data/dgtl_road_atlas.gdb \
   TRANSPORT_LINE
 # Because we are not loading this table via bc2pg, no record is added to bcdata table.
 # Do this manually here so we know what day this data was extracted
@@ -57,7 +57,7 @@ ogr2ogr \
   "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
   -overwrite \
   -nln whse_basemapping.transport_line_structure_code \
-  source_data/dgtl_road_atlas.gdb \
+  data/dgtl_road_atlas.gdb \
   TRANSPORT_LINE_STRUCTURE_CODE
 
 ogr2ogr \
@@ -65,7 +65,7 @@ ogr2ogr \
   "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
   -overwrite \
   -nln whse_basemapping.transport_line_type_code \
-  source_data/dgtl_road_atlas.gdb \
+  data/dgtl_road_atlas.gdb \
   TRANSPORT_LINE_TYPE_CODE
 
 ogr2ogr \
@@ -73,7 +73,7 @@ ogr2ogr \
   "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
   -overwrite \
   -nln whse_basemapping.transport_line_surface_code \
-  source_data/dgtl_road_atlas.gdb \
+  data/dgtl_road_atlas.gdb \
   TRANSPORT_LINE_SURFACE_CODE
 
 # FTEN (active and retired)
@@ -87,7 +87,7 @@ bcdata bc2pg WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW \
   --query "STOCKING_STATUS_CODE = 'NP' AND STOCKING_TYPE_CODE IN ('RD','UNN') AND SILV_POLYGON_NUMBER NOT IN ('landing', 'lnd') AND GEOMETRY_EXIST_IND = 'Y'"
 
 # As built roads
-# **This presumes the file has already been downloaded to source_data/ABR.gdb/ABR_ROAD_SECTION_LINE**
+# **This presumes the file has already been downloaded to data/ABR.gdb/ABR_ROAD_SECTION_LINE**
 ogr2ogr -f PostgreSQL \
   "PG:host=$PGHOST user=$PGUSER dbname=$PGDATABASE port=$PGPORT" \
   -overwrite \
@@ -95,7 +95,7 @@ ogr2ogr -f PostgreSQL \
   -lco GEOMETRY_NAME=geom \
   -lco FID=ROAD_SECTION_LINE_ID \
   -nln whse_forest_tenure.abr_road_section_line \
-  source_data/ABR.gdb \
+  data/ABR.gdb \
   ABR_ROAD_SECTION_LINE
 # Because we are not loading this table via bc2pg, no record is added to bcdata table.
 # Do this manually here so we know what day this data was extracted
