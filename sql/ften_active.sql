@@ -1,3 +1,7 @@
+-- -----------------------
+-- clean active FTEN roads slightly, snapping endpoints and re-noding
+-- -----------------------
+
 WITH src AS (
   SELECT row_number() over() as id, *
   FROM (

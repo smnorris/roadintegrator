@@ -19,7 +19,7 @@
 -- Filter out small interior rings.
 -- Simply using the exterior ring of input polygons would be nicer but input features
 -- from RESULTS can be very complex. Filtering out small interior rings helps smooth
--- out the processing.
+-- out the processing but is very slow - this is the bottleneck in this process.
 -- ---------------
 
 -- extract features from tile
@@ -29,10 +29,10 @@ WITH tile AS
 FROM (
   SELECT
     CASE
-      WHEN ST_CoveredBy(r.geom, t.geom) THEN r.geom
-      ELSE ST_Intersection(t.geom, r.geom)
+      WHEN ST_CoveredBy(ST_MakeValid(r.geom), ST_Buffer(t.geom, 10)) THEN r.geom
+      ELSE ST_Intersection(ST_Buffer(t.geom, 10), ST_MakeValid(r.geom))
     END AS geom
-  FROM :in_table r
+  FROM whse_forest_vegetation.rslt_forest_cover_inv_svw r
   INNER JOIN whse_basemapping.bcgs_20k_grid t
   ON ST_Intersects(r.geom, t.geom)
   WHERE t.map_tile = :'tile'
@@ -40,50 +40,98 @@ FROM (
 WHERE ST_Dimension(geom) = 2
 ),
 
--- merge the road polys so intersections are better represented
-merged AS
+-- clean the geometries
+-- note that the st_subdivide will create small gaps in the output roads
+cleaned AS
 (
   SELECT
-    (ST_Dump(                         -- singlepart
-      ST_Union(                       -- merge
+      (ST_Dump(                       -- singlepart
         ST_MakeValid(                 -- clean
           ST_ForceRHR(                -- clean
-            ST_FilterRings(geom, 10)  -- remove holes <10m area
+           -- ST_FilterRings(geom, 50)  -- remove holes <50m area -- this is too slow, just leave the holes for now
+          geom
           )
         )
-      )
-    )).geom as geom
+      )).geom
+     as geom
   FROM tile
 ),
 
--- convert to lines, merge the lines
+-- convert to lines
 lines AS
 (
   SELECT
-   row_number() over() AS id,
-   (ST_Dump(ST_Linemerge(ST_Collect(geom)))).geom as geom
-  FROM (
-    SELECT
-      (ST_Dump(
-        ST_ApproximateMedialAxisIgnoreErrors(geom)
-        )
-      ).geom as geom
-    FROM merged
-  ) as f
+    (ST_Dump(
+      ST_ApproximateMedialAxisIgnoreErrors(geom)
+      )
+    ).geom as geom
+  FROM cleaned
+),
+
+-- cut to tile (because a slightly buffered tile is used above)
+cut_to_tile AS
+(
+  SELECT
+    row_number() over() as id,
+    CASE
+      WHEN ST_CoveredBy(r.geom, t.geom) THEN r.geom
+      ELSE ST_Intersection(t.geom, r.geom)
+    END AS geom
+  FROM lines r
+  INNER JOIN whse_basemapping.bcgs_20k_grid t
+  ON ST_Intersects(r.geom, t.geom)
+  WHERE t.map_tile = :'tile'
 )
+
+-- find obvious duplicates
+-- this slows things down too much
+/*
+dups AS
+(
+  SELECT
+   a.id as id_a,
+   b.id as id_b
+  FROM cut_to_tile a
+  INNER JOIN cut_to_tile b
+  ON ST_Equals(a.geom, b.geom)
+  WHERE a.id < b.id
+)
+
+-- insert all lines >= 7m
+-- (removes artifacts at curves in input polys)
+-- try and merge the output lines
+INSERT INTO :out_table
+(
+  map_tile,
+  geom
+)
+SELECT
+  :'tile' as map_tile,
+  geom
+FROM
+(
+SELECT
+    (ST_Dump(ST_Linemerge(ST_Collect(geom)))).geom as geom
+FROM cut_to_tile a
+LEFT OUTER JOIN dups b
+ON a.id = b.id_b
+WHERE b.id_b IS NULL
+) as f
+WHERE ST_length(a.geom) >= 7;
+*/
 
 INSERT INTO :out_table
 (
   map_tile,
   geom
 )
-
--- insert all lines >= 6m (removing artifacts at curves in input polys)
--- We could also search the <6m segments for lines that intersect 2 other
--- lines to ensure all parts of network are included.
--- Don't bother with this for now
+-- insert all lines >= 7m (after merging the lines)
 SELECT
   :'tile' as map_tile,
   geom
-FROM lines l1
-WHERE ST_Length(geom) >= 6
+FROM
+(
+  SELECT (ST_Dump(ST_Linemerge(ST_Collect(geom)))).geom as geom
+  FROM cut_to_tile
+) as f
+WHERE ST_Length(geom) >= 7;

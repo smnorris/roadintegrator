@@ -1,5 +1,6 @@
 -- Remove holes from polygons smaller than specified size
--- http://www.spatialdbadvisor.com/postgis_tips_tricks/92/filtering-rings-in-polygon-postgis
+-- https://www.spdba.com.au/filtering-rings-in-polygon-postgis
+-- Note that this is VERY slow.
 CREATE OR REPLACE FUNCTION ST_FilterRings(geometry,FLOAT) RETURNS geometry AS
 $$ SELECT ST_BuildArea(ST_Collect(d.built_geom)) AS filtered_geom
      FROM
@@ -22,3 +23,5 @@ $$ SELECT ST_BuildArea(ST_Collect(d.built_geom)) AS filtered_geom
       ) d
 $$
 LANGUAGE 'sql' IMMUTABLE;
+
+

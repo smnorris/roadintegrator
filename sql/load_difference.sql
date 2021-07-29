@@ -1,4 +1,6 @@
+-- -----------------------
 -- Load roads that are not covered by 7m buffer of higher priority roads
+-- -----------------------
 
 -- cut source roads to tile, make sure they are singlepart
 WITH tile AS

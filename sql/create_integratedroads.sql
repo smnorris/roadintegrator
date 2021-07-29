@@ -1,8 +1,6 @@
--- name: create_output#
+-- -----------------------
 -- Create the empty output table
-
-DROP TABLE IF EXISTS integratedroads;
-
+-- -----------------------
 CREATE TABLE integratedroads (
     integratedroads_id serial primary key,
     bcgw_source character varying,
