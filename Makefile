@@ -1,7 +1,6 @@
 .PHONY: all db clean
 
-GENERATED_FILES = .source_priority \
-.whse_basemapping.bcgs_20k_grid \
+GENERATED_FILES = .whse_basemapping.bcgs_20k_grid \
 data/dgtl_road_atlas.gdb \
 .whse_basemapping.transport_line \
 .whse_basemapping.transport_line_structure_code \
@@ -47,13 +46,6 @@ db:
 	psql -c "CREATE EXTENSION postgis_sfcgal"
 	psql -f sql/ST_FilterRings.sql
 	psql -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
-
-# load data source priority lookup
-# Note that this table is just for reporting, it does not control how priority is handled in script
-.source_priority: data/source_priority.csv
-	psql -c "CREATE TABLE source_priority (priority integer, bcgw_source character varying);"
-	psql -c "\copy source_priority FROM 'data/source_priority.csv' delimiter ',' csv header"
-	touch $@
 
 # load 20k tiles
 .whse_basemapping.bcgs_20k_grid:
@@ -128,7 +120,8 @@ data/dgtl_road_atlas.gdb:
 .whse_forest_vegetation.rslt_forest_cover_inv_svw:
 	$(bc2pg) WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW \
   	--fid FOREST_COVER_ID \
-  	--query "STOCKING_STATUS_CODE = 'NP' AND STOCKING_TYPE_CODE IN ('RD','UNN') AND SILV_POLYGON_NUMBER NOT IN ('landing', 'lnd') AND GEOMETRY_EXIST_IND = 'Y'"
+  	--query "STOCKING_STATUS_CODE = 'NP' AND STOCKING_TYPE_CODE IN ('RD','UNN') \
+  	         AND SILV_POLYGON_NUMBER NOT IN ('landing', 'lnd') AND GEOMETRY_EXIST_IND = 'Y'"
 	touch $@
 
 # As-built roads
@@ -186,7 +179,8 @@ data/dgtl_road_atlas.gdb:
 	    ON ST_Intersects(t.geom, r.geom) \
 	    WHERE life_cycle_status_code = 'ACTIVE' \
 	    ORDER BY map_tile" \
-	    | parallel psql -f sql/ften_active.sql -v tile={1}
+	    | parallel --progress --joblog $@.log \
+	      psql -f sql/ften_active.sql -v tile={1}
 	psql -c "CREATE INDEX on ften_active USING GIST (geom);"
 	touch $@
 
@@ -204,7 +198,8 @@ data/dgtl_road_atlas.gdb:
 	    ON ST_Intersects(t.geom, r.geom) \
 	    WHERE life_cycle_status_code = 'RETIRED' \
 	    ORDER BY map_tile" \
-	    | parallel psql -f sql/ften_retired.sql -v tile={1}
+	    | parallel --progress --joblog $@.log \
+	      psql -f sql/ften_retired.sql -v tile={1}
 	psql -c "CREATE INDEX on ften_retired USING GIST (geom);"
 	touch $@
 
@@ -219,9 +214,10 @@ data/dgtl_road_atlas.gdb:
 	    FROM whse_basemapping.bcgs_20k_grid t \
 	    INNER JOIN whse_forest_vegetation.rslt_forest_cover_inv_svw r \
 	    ON ST_Intersects(t.geom, r.geom) \
-	    WHERE ST_ISvalid(r.geom) \
+	    WHERE ST_ISValid(r.geom) \
 	    ORDER BY t.map_tile" \
-	    | parallel psql -f sql/roadpoly2line.sql \
+	    | parallel --progress --joblog $@.log \
+	      psql -f sql/roadpoly2line.sql \
 	        -v tile={1} \
 	        -v in_table=whse_forest_vegetation.rslt_forest_cover_inv_svw \
 	        -v out_table=results
@@ -240,7 +236,8 @@ data/dgtl_road_atlas.gdb:
 	    INNER JOIN whse_mineral_tenure.og_road_area_permit_sp r \
 	    ON ST_Intersects(t.geom, r.geom) \
 	    ORDER BY t.map_tile" \
-	     | parallel psql -f sql/roadpoly2line.sql \
+	     | parallel --progress --joblog $@.log \
+	       psql -f sql/roadpoly2line.sql \
 	       -v tile={1} \
 	       -v in_table=whse_mineral_tenure.og_road_area_permit_sp \
 	       -v out_table=og_permits_row

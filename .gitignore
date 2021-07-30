@@ -1,4 +1,6 @@
-# Ignore data dumps
+# Ignore data dumps, logfiles, make files
 *.gpkg
 *.gdb
 *.zip
+.*
+!.gitignore

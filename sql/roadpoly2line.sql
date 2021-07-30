@@ -41,10 +41,10 @@ WHERE ST_Dimension(geom) = 2
 ),
 
 -- clean the geometries
--- note that the st_subdivide will create small gaps in the output roads
 cleaned AS
 (
   SELECT
+    ST_SimplifyPreserveTopology(      -- simplify so we don't crash the db on extremely complex shapes
       (ST_Dump(                       -- singlepart
         ST_MakeValid(                 -- clean
           ST_ForceRHR(                -- clean
@@ -52,10 +52,25 @@ cleaned AS
           geom
           )
         )
-      )).geom
+      )).geom,
+      .5
+    )
      as geom
   FROM tile
 ),
+
+-- if geometries are extremely complex, subdivide them
+-- (this potentially leaves small gaps between the features)
+--subdivided AS
+--(
+  --SELECT st_subdivide(geom, 500)
+  --FROM cleaned
+  --WHERE st_npoints(geom) >= 5000
+  --UNION ALL
+  --SELECT geom
+  --FROM cleaned
+  --WHERE st_npoints(geom) < 5000
+--),
 
 -- convert to lines
 lines AS

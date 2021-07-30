@@ -21,5 +21,6 @@ do
       INNER JOIN $source_table r
       ON ST_Intersects(t.geom, r.geom)
       ORDER BY t.map_tile" \
-      | parallel psql -f sql/load_difference.sql -v tile={1} -v src_roads=$source_table -v pk=${tables[$source_table]}
+      | parallel --progress --joblog .integratedroads.log \
+        psql -f sql/load_difference.sql -v tile={1} -v src_roads=$source_table -v pk=${tables[$source_table]}
 done
