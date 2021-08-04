@@ -62,7 +62,6 @@ Installation of requirements to an isolated environment via `conda` is recommend
         conda env create -f environment.yml
         conda activate roadintegrator
 
-
 ### Database
 
 - PostgreSQL >= 13.3

@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - make=3.81
+  - make
   - parallel=20210622
   - python=3.9
   - pip=21.1.*
@@ -12,7 +12,7 @@ dependencies:
   - rasterio=1.2.*
   - libpq>=13.1
   - pip:
-      - bcdata==0.4.5
+      - -r requirements.txt
 variables:
   PGHOST: localhost
   PGUSER: postgres
