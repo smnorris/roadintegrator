@@ -246,9 +246,10 @@ data/dgtl_road_atlas.gdb:
 	psql -c "CREATE INDEX ON og_permits_row USING GIST (geom)"
 	touch $@
 
-# create output table
+# load data to integratedroads table
 .integratedroads: .whse_basemapping.transport_line .ften_active .ften_active .results .whse_forest_tenure.abr_road_section_line .whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp .whse_mineral_tenure.og_road_segment_permit_sp .og_permits_row
-	psql -f sql/create_integratedroads.sql
+	# create output table
+	psql -f sql/integratedroads.sql
 
 	# load DRA (just dump everything in, these features remain unchanged)
 	psql -tXA \
@@ -258,7 +259,7 @@ data/dgtl_road_atlas.gdb:
 	    INNER JOIN whse_basemapping.transport_line r \
 	    ON ST_Intersects(t.geom, r.geom) \
 	    ORDER BY substring(t.map_tile from 1 for 4)" \
-	    | parallel psql -f sql/load_dra.sql -v tile={1}
+	    | parallel psql -f sql/dra.sql -v tile={1}
 
 	# load all other sources
 	./integrateroads.sh
