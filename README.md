@@ -94,7 +94,7 @@ As long as you do not remove this container, it will retain all the data you put
 
         make all
 
-To log errors:
+If making changes, it is useful to log errors to file:
 
         make all @> make_errors.txt
 
