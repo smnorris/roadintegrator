@@ -32,7 +32,7 @@ FROM (
       WHEN ST_CoveredBy(ST_MakeValid(r.geom), ST_Buffer(t.geom, 10)) THEN r.geom
       ELSE ST_Intersection(ST_Buffer(t.geom, 10), ST_MakeValid(r.geom))
     END AS geom
-  FROM whse_forest_vegetation.rslt_forest_cover_inv_svw r
+  FROM :in_table r
   INNER JOIN whse_basemapping.bcgs_20k_grid t
   ON ST_Intersects(r.geom, t.geom)
   WHERE t.map_tile = :'tile'

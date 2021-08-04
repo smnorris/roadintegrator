@@ -17,7 +17,8 @@ data/dgtl_road_atlas.gdb \
 .results \
 .og_permits_row \
 .integratedroads \
-.integratedroads_vw
+.integratedroads_vw \
+.summary.md
 
 
 # Make all targets
@@ -34,6 +35,7 @@ bc2pg := bcdata bc2pg --db_url postgresql://postgres:postgres@$(PGHOST):$(PGPORT
 
 # create db docker container and add required extensions and functions
 db:
+	docker pull postgis/postgis:13-master
 	docker run --name roadintegrator-db \
 	  -e POSTGRES_PASSWORD=postgres \
 	  -e POSTGRES_USER=postgres \

@@ -32,6 +32,7 @@ Several specific issues will lead to over-representation of roads:
 - the same road present in different source layers will only be de-duplicated when features are less than 7m apart, see [Duplications](#Duplications) below)
 - roads are present in the tenure layers that have not been built
 - roads may have been decomissioned, overgrown or become otherwise impassible
+- duplicate same-source roads are not accounted for
 
 Additional notes:
 
@@ -73,59 +74,23 @@ If you do not already have a database meeting these requirements, use Docker to 
     - [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
     - [Windows](https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe)
 
-2. Get a Postgres docker image with a PostGIS 3.1 / Geos 3.9 enabled database:
+2. Create and prep the database
 
-        docker pull postgis/postgis:13-master
+        make db
 
-3. Create a container with the postgis image, using the database name and port specified by the `PGDATABASE` and `PGPORT` environment variables:
-
-        # Linux/Mac
-
-        docker run --name postgis \
-          -e POSTGRES_PASSWORD=postgres \
-          -e POSTGRES_USER=postgres \
-          -e PG_DATABASE=$PGDATABASE \
-          -p $PGPORT:5432 \
-          -d postgis/postgis:13-master
-
-        # Windows
-
-        docker run --name postgis ^
-          -e POSTGRES_PASSWORD=postgres ^
-          -e POSTGRES_USER=postgres ^
-          -e PG_DATABASE=%PGDATABASE% ^
-          -p %PGPORT%:5432 ^
-          -d postgis/postgis:13-master
-
-4. Create the database
-
-        psql -c "CREATE DATABASE roadintegrator" postgres
-
-Above creates and runs a container called `postgis` with a postgres server and db available on the port specified by the `$PGPORT` environment variable (configurable in `environment.yml`)
+Above creates and runs a container called `roadintegrator-db` with a postgres server/db available on the port specified by the `$PGPORT` environment variable (configurable in `environment.yml`)
 
 As long as you do not remove this container, it will retain all the data you put in it. If you have shut down Docker or the container, start it up again with this command:
 
-          docker start postgis
+          docker start roadintegrator-db
 
 ## Usage
 
 1. Manually extract `WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE` from BCGW, save to file `source_data/ABR.gdb/ABR_ROAD_SECTION_LINE`
 
-2. Download all other sources and load all data to the postgres db:
+2. Run the job:
 
-        ./01_load.sh
-
-3. Convert polygon road sources to lines:
-
-        ./02_preprocess.sh
-
-4. Process all roads, create output view `integratedroads_vw`:
-
-        ./03_process.sh
-
-5. Dump output view to file:
-
-        ./04_dump.sh
+        make all
 
 
 ## Duplications
