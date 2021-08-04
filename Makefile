@@ -18,7 +18,8 @@ data/dgtl_road_atlas.gdb \
 .og_permits_row \
 .integratedroads \
 .integratedroads_vw \
-.summary.md
+.integratedroads.gpkg.zip \
+summary.md
 
 
 # Make all targets
@@ -277,7 +278,7 @@ data/dgtl_road_atlas.gdb:
 	touch $@
 
 # dump to geopackage
-.integratedroads.gpkg.zip: integratedroads_vw
+.integratedroads.gpkg.zip: .integratedroads_vw
 	ogr2ogr \
     -f GPKG \
     -progress \
@@ -314,7 +315,7 @@ data/dgtl_road_atlas.gdb:
 	zip -r $@ integratedroads.gpkg
 	rm integratedroads.gpkg
 
-.summary.md: integratedroads_vw
+summary.md: .integratedroads_vw
 	# Generate summary table as markdown for easy viewing on GH
 	# https://gist.github.com/rastermanden/94c4a663176c41248f3e
-	psql -f sql/summary.sql | sed 's/+/|/g' | sed 's/^/|/' | sed 's/$/|/' | grep -v rows | grep -v '||' > .summary.md
+	psql -f sql/summary.sql | sed 's/+/|/g' | sed 's/^/|/' | sed 's/$$/|/' | grep -v rows | grep -v '||' > summary.md

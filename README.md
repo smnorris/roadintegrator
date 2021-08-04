@@ -40,35 +40,36 @@ Additional notes:
 - because processing is tiled by BCGS 20k tile, any portion of road falling outside of these tiles will not be included (tile edges do not exactly match the surveyed BC border)
 
 
-## Installation
+## Requirements
 
-### Processing environment
+### Non-database reqirements
+
+Installation of requirements to an isolated environment via `conda` is recommended.
 
 1. Install Anaconda or [miniconda](https://docs.conda.io/en/latest/miniconda.html)
 
 2. Open a [conda command prompt](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html)
 
-3. Clone the repository, navigate to the project folder, create and activate provided environment:
+3. Clone the repository, navigate to the project folder:
 
         git clone https://github.com/smnorris/roadintegrator.git
         cd roadintegrator
 
-4. If necessary, edit the postgres connection environment variables in `environment.yml` to match your database connection parameters (the provided default is set to `localhost` with port `5435` to avoid collision with existing local databases).
+4. If necessary, edit the postgres connection environment variables in `environment.yml` to match your database connection parameters.
 
-5. Create environment/load dependencies, and activate the environment:
+5. Create environment, load dependencies, activate the environment:
 
         conda env create -f environment.yml
         conda activate roadintegrator
 
-### Database
 
-The analysis requires:
+### Database
 
 - PostgreSQL >= 13.3
 - PostGIS >= 3.1
 - GEOS >= 3.9
 
-If you do not already have a database meeting these requirements, use Docker to quickly set one up:
+If you do not already have a database meeting above requirements, use Docker to quickly create one:
 
 1. Download and install Docker using the appropriate link for your OS:
     - [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
@@ -84,9 +85,14 @@ As long as you do not remove this container, it will retain all the data you put
 
           docker start roadintegrator-db
 
+### Script requirements
+
+
+
+
 ## Usage
 
-1. Manually extract `WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE` from BCGW, save to file `source_data/ABR.gdb/ABR_ROAD_SECTION_LINE`
+1. Manually extract `WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE` from BCGW, save to file `data/ABR.gdb/ABR_ROAD_SECTION_LINE`
 
 2. Run the job:
 
@@ -104,18 +110,11 @@ These diagrams illustrate a problematic sample area, showing three input road la
 ### resulting output
 ![inputs](img/roadintegrator_output.png)
 
+
 ## Output summary
 
-| priority |                       source                       | extraction_date | length_km | length_pct |
-|----------|----------------------------------------------------|-----------------|-----------:|------------:|
-| 1        | whse_basemapping.transport_line                    | 2021-07-27      | 792,033   | 82.97|
-| 2        | whse_forest_tenure.ften_road_section_lines_svw     | 2021-07-27      | 101,721   | 10.66|
-| 3        | whse_forest_vegetation.rslt_forest_cover_inv_svw   | 2021-07-27      | 49,331    | 5.17|
-| 4        | whse_forest_tenure.abr_road_section_line           | 2021-07-13      | 2,620     | 0.27|
-| 5        | whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp | 2021-07-27      | 1,006     | 0.11|
-| 6        | whse_mineral_tenure.og_road_segment_permit_sp      | 2021-07-27      | 7,737     | 0.81|
-| 7        | whse_mineral_tenure.og_road_area_permit_sp         | 2021-07-27      | 189       | 0.02|
-|          |                                                    | TOTAL           | 954,638   | |
+[Summary of length by data source](summary.md)
+
 
 ## Alternative approaches
 
