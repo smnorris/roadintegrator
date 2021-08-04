@@ -17,6 +17,7 @@ data/dgtl_road_atlas.gdb \
 .results \
 .og_permits_row \
 .integratedroads \
+.integratedroads_sources \
 .integratedroads_vw \
 integratedroads.gpkg.zip \
 summary.md
@@ -272,7 +273,15 @@ data/dgtl_road_atlas.gdb:
 	psql -c "CREATE INDEX ON integratedroads (og_road_segment_permit_id)"
 	touch $@
 
-.integratedroads_vw: .integratedroads
+# for all output features, identify what other source roads intersect with the road's 7m buffer
+.integratedroads_sources:
+	psql -f sql/integratedroads_sources.sql
+	psql -tXA \
+	-c "SELECT DISTINCT map_tile FROM integratedroads ORDER BY map_tile" \
+	    | parallel --progress --joblog $@.log \
+	      psql -f sql/load_sources.sql -v tile={1}
+
+.integratedroads_vw: .integratedroads .integratedroads_sources
 	# and finally create output view with required data/columns
 	psql -f sql/integratedroads_vw.sql
 	touch $@
