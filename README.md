@@ -85,10 +85,6 @@ As long as you do not remove this container, it will retain all the data you put
 
           docker start roadintegrator-db
 
-### Script requirements
-
-
-
 
 ## Usage
 
@@ -98,6 +94,9 @@ As long as you do not remove this container, it will retain all the data you put
 
         make all
 
+To log errors:
+
+        make all @> make_errors.txt
 
 ## Duplications
 As mentioned above, this analysis is very much a rough approximation. It works well in areas where roads are not duplicated between sources or where source road networks are near-coincident.

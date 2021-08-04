@@ -18,7 +18,7 @@ data/dgtl_road_atlas.gdb \
 .og_permits_row \
 .integratedroads \
 .integratedroads_vw \
-.integratedroads.gpkg.zip \
+integratedroads.gpkg.zip \
 summary.md
 
 
@@ -32,22 +32,21 @@ clean:
 	docker rm roadintegrator-db
 
 # shortcut to bcdata command with correct port specified
-bc2pg := bcdata bc2pg --db_url postgresql://postgres:postgres@$(PGHOST):$(PGPORT)/$(PGDATABASE)
+bc2pg := bcdata bc2pg --db_url postgresql://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)
 
 # create db docker container and add required extensions and functions
 db:
 	docker pull postgis/postgis:13-master
 	docker run --name roadintegrator-db \
-	  -e POSTGRES_PASSWORD=postgres \
-	  -e POSTGRES_USER=postgres \
-	  -e PG_DATABASE=roadintegrator \
+	  -e POSTGRES_PASSWORD=$(PGPASSWORD) \
+	  -e POSTGRES_USER=$(PGUSER) \
+	  -e PG_DATABASE=$(PGDATABASE) \
 	  -p ${PGPORT}:5432 \
 	  -d postgis/postgis:13-master
 	sleep 5  # wait for the db to come up
-	psql -c "CREATE DATABASE roadintegrator" postgres
+	psql -c "CREATE DATABASE $(PGDATABASE)" postgres
 	psql -c "CREATE EXTENSION postgis"
 	psql -c "CREATE EXTENSION postgis_sfcgal"
-	psql -f sql/ST_FilterRings.sql
 	psql -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
 
 # load 20k tiles
@@ -278,7 +277,7 @@ data/dgtl_road_atlas.gdb:
 	touch $@
 
 # dump to geopackage
-.integratedroads.gpkg.zip: .integratedroads_vw
+integratedroads.gpkg.zip: .integratedroads_vw
 	ogr2ogr \
     -f GPKG \
     -progress \
