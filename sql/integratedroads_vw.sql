@@ -93,7 +93,7 @@ SELECT
   og_permits_row.road_segment               AS OGP_ROW_ROAD_SEGMENT,
   og_permits_row.land_stage_desc            AS OGP_ROW_LAND_STAGE_DESC,
   og_permits_row.land_stage_eff_date        AS OGP_ROW_LAND_STAGE_EFF_DATE,
-  og_permits_row.constuction_desc           AS OGP_ROW_CONSTUCTION_DESC,
+  og_permits_row.construction_desc          AS OGP_ROW_CONSTRUCTION_DESC,
   og_permits_row.proponent                  AS OGP_ROW_PROPONENT,
   og_permits_row.land_type                  AS OGP_ROW_LAND_TYPE,
   i.length_metres                           AS LENGTH_METRES,

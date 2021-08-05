@@ -280,9 +280,17 @@ data/dgtl_road_atlas.gdb:
 	-c "SELECT DISTINCT map_tile FROM integratedroads ORDER BY map_tile" \
 	    | parallel --progress --joblog $@.log \
 	      psql -f sql/load_sources.sql -v tile={1}
+	psql -c "CREATE INDEX ON integratedroads_sources (integratedroads_id)"
+	psql -c "CREATE INDEX ON integratedroads_sources (map_label)"
+	psql -c "CREATE INDEX ON integratedroads_sources (forest_cover_id)"
+	psql -c "CREATE INDEX ON integratedroads_sources (road_section_line_id)"
+	psql -c "CREATE INDEX ON integratedroads_sources (og_petrlm_dev_rd_pre06_pub_id)"
+	psql -c "CREATE INDEX ON integratedroads_sources (og_road_segment_permit_id)"
+	psql -c "CREATE INDEX ON integratedroads_sources (og_road_area_permit_id)"
+	touch $@
 
+# create output view with required data/columns
 .integratedroads_vw: .integratedroads .integratedroads_sources
-	# and finally create output view with required data/columns
 	psql -f sql/integratedroads_vw.sql
 	touch $@
 
