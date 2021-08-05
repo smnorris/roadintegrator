@@ -100,7 +100,7 @@ If making changes, it is useful to log errors to file:
 ## Duplications
 As mentioned above, this analysis is very much a rough approximation. It works well in areas where roads are not duplicated between sources or where source road networks are near-coincident.
 
-These diagrams illustrate a problematic sample area, showing three input road layers (green as highest priority) and the resulting output (using a 7m tolerance).
+These diagrams illustrate a problematic sample area, showing three similar input road layers and the resulting output (using a 7m tolerance).
 
 ### three input layers
 ![inputs](img/roadintegrator_inputs.png)
