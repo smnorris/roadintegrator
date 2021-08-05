@@ -23,6 +23,7 @@ First, sources are preprocessed:
 
 Next, all roads are loaded to the output table in order of decreasing priority. Portions of lower priority roads within 7m of a higher priority road are deleted. Where the endpoint of a remaining lower priority road is within 7m of a higher prioirity road, the endpoint of the lower priority road is snapped to the closest point on the higher priority road.
 
+
 ## Limitations and Caveats
 
 The authoritative source for built roads in British Columbia is the [Digital Road Atlas](https://catalogue.data.gov.bc.ca/dataset/digital-road-atlas-dra-master-partially-attributed-roads). The process used in these scripts **IS NOT A COMPRENSIVE CONFLATION/MERGE** of the input road layers, it is a quick approximation. The intent of the processing is to retain all input features not covered by a higher priority road - due to the nature of duplication in BC road data, the output will always be an over-representation of roads.
@@ -93,14 +94,15 @@ As long as you do not remove this container, it will retain all the data you put
 
         make all
 
-If making changes, it is useful to log errors to file:
+If changing the scripts, it is useful to log errors to file:
 
-        make all @> make_errors.txt
+        make all 2> errors.log
 
 ## Duplications
+
 As mentioned above, this analysis is very much a rough approximation. It works well in areas where roads are not duplicated between sources or where source road networks are near-coincident.
 
-These diagrams illustrate a problematic sample area, showing three similar input road layers and the resulting output (using a 7m tolerance).
+These diagrams illustrate a problematic sample area, showing three similar input road layers and the resulting output.
 
 ### three input layers
 ![inputs](img/roadintegrator_inputs.png)
