@@ -43,60 +43,53 @@ Additional notes:
 
 ## Requirements
 
-### Non-database reqirements
+- PostgreSQL >= 13.3
+- PostGIS >= 3.1
+- GEOS >= 3.9
+- GDAL >= 3.3.0
+- Python >= 3.8
+- Bash >= 4
+- GNU Parallel
+- GNU Make
+- unzip
+- bcdata >= 0.4.5
 
-Installation of requirements to an isolated environment via `conda` is recommended.
+To manage these requirements, using Docker is recommended.
 
-1. Install Anaconda or [miniconda](https://docs.conda.io/en/latest/miniconda.html)
+## Setup
 
-2. Open a [conda command prompt](https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html)
-
-3. Clone the repository, navigate to the project folder:
+Clone the repository, navigate to the project folder:
 
         git clone https://github.com/smnorris/roadintegrator.git
         cd roadintegrator
 
-4. If necessary, edit the postgres connection environment variables in `environment.yml` to match your database connection parameters.
-
-5. Create environment, load dependencies, activate the environment:
-
-        conda env create -f environment.yml
-        conda activate roadintegrator
-
-### Database
-
-- PostgreSQL >= 13.3
-- PostGIS >= 3.1
-- GEOS >= 3.9
-
-If you do not already have a database meeting above requirements, use Docker to quickly create one:
-
-1. Download and install Docker using the appropriate link for your OS:
+Install Docker for your OS:
     - [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
     - [Windows](https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe)
 
-2. Create and prep the database
+Build and start the containers:
 
-        make db
+        docker-compose build
+        docker-compose up -d
 
-Above creates and runs a container called `roadintegrator-db` with a postgres server/db available on the port specified by the `$PGPORT` environment variable (configurable in `environment.yml`)
+Create the database:
 
-As long as you do not remove this container, it will retain all the data you put in it. If you have shut down Docker or the container, start it up again with this command:
+        docker-compose run --rm app make db
 
-          docker start roadintegrator-db
+As long as you do not remove the container `roadintegrator-db`, it will retain all the data you put in it.
+If you have shut down Docker or the container, start it up again with this command:
 
+        docker-compose up -d
 
 ## Usage
 
-1. Manually extract `WHSE_FOREST_TENURE.ABR_ROAD_SECTION_LINE` from BCGW, save to file `data/ABR.gdb/ABR_ROAD_SECTION_LINE`
+To run all the scripts:
 
-2. Run the job:
+        docker-compose run --rm app make all
 
-        make all
+It can be useful to log errors to file:
 
-If changing the scripts, it is useful to log errors to file:
-
-        make all 2> errors.log
+        docker-compose run --rm app make all 2> errors.log
 
 ## Duplications
 

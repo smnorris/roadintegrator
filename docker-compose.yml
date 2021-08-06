@@ -1,0 +1,31 @@
+version: "3.9"  
+services:
+  db:
+    image: postgis/postgis:13-master
+    container_name: roadintegrator-db
+    ports:
+      - 8001:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 1s
+      retries: 5
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PG_DATABASE=roadintegrator
+  app:
+    build: .
+    container_name: roadintegrator-client
+    volumes:
+      - "./:/home/roadintegrator"
+    environment:
+      - PGHOST=db
+      - PGPORT=5432
+      - PGUSER=postgres
+      - PGPASSWORD=postgres
+      - PGDATABASE=roadintegrator
+    depends_on:
+      db:
+        condition: service_healthy
+

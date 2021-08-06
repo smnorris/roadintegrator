@@ -1,4 +1,4 @@
-.PHONY: all db clean
+.PHONY: all build db clean
 
 GENERATED_FILES = .whse_basemapping.bcgs_20k_grid \
 data/dgtl_road_atlas.gdb \
@@ -26,29 +26,27 @@ summary.md
 # Make all targets
 all: $(GENERATED_FILES)
 
+
+# get/build required docker images
+build:
+	docker-compose build
+	docker-compose up -d
+
 # Remove all generated targets, stop and delete the db container
 clean:
 	rm -Rf $(GENERATED_FILES)
-	docker stop roadintegrator-db
-	docker rm roadintegrator-db
+	docker-compose down
 
-# shortcut to bcdata command with correct port specified
-bc2pg := bcdata bc2pg --db_url postgresql://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)
-
-# create db docker container and add required extensions and functions
+# create db, add required extensions and functions
 db:
-	docker pull postgis/postgis:13-master
-	docker run --name roadintegrator-db \
-	  -e POSTGRES_PASSWORD=$(PGPASSWORD) \
-	  -e POSTGRES_USER=$(PGUSER) \
-	  -e PG_DATABASE=$(PGDATABASE) \
-	  -p ${PGPORT}:5432 \
-	  -d postgis/postgis:13-master
-	sleep 5  # wait for the db to come up
 	psql -c "CREATE DATABASE $(PGDATABASE)" postgres
 	psql -c "CREATE EXTENSION postgis"
 	psql -c "CREATE EXTENSION postgis_sfcgal"
 	psql -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
+
+
+# shortcut to bcdata command with correct port specified
+bc2pg := bcdata bc2pg --db_url postgresql://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)
 
 # load 20k tiles
 .whse_basemapping.bcgs_20k_grid:
@@ -295,7 +293,7 @@ data/dgtl_road_atlas.gdb:
 	touch $@
 
 # dump to geopackage
-integratedroads.gpkg.zip: .integratedroads_vw
+data/integratedroads.gpkg.zip: .integratedroads_vw
 	ogr2ogr \
     -f GPKG \
     -progress \
@@ -303,7 +301,7 @@ integratedroads.gpkg.zip: .integratedroads_vw
     -nln integratedroads \
     -lco GEOMETRY_NULLABLE=NO \
     -sql "SELECT * FROM integratedroads_vw" \
-    integratedroads.gpkg \
+    data/integratedroads.gpkg \
     "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)" \
 
 	# summarize road source by length and percentage in the output gpkg
@@ -326,13 +324,12 @@ integratedroads.gpkg.zip: .integratedroads_vw
 	FROM integratedroads_vw, total t \
 	GROUP BY bcgw_source, to_char(bcgw_extraction_date, 'YYYY-MM-DD'), total_length \
 	ORDER BY bcgw_source" \
-	  integratedroads.gpkg \
+	  data/integratedroads.gpkg \
 	  "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
-	zip -r $@ integratedroads.gpkg
-	rm integratedroads.gpkg
+	zip -r $@ data/integratedroads.gpkg
+	rm data/integratedroads.gpkg
 
-summary.md: .integratedroads_vw
-	# Generate summary table as markdown for easy viewing on GH
-	# https://gist.github.com/rastermanden/94c4a663176c41248f3e
-	psql -f sql/summary.sql | sed 's/+/|/g' | sed 's/^/|/' | sed 's/$$/|/' | grep -v rows | grep -v '||' > summary.md
+# summarize outputs in a csv file
+data/summary.csv: .integratedroads_vw
+	psql -f sql/summary.sql > data/summary.csv

@@ -1,4 +1,4 @@
-WITH source_priority AS (
+COPY (WITH source_priority AS (
   SELECT * FROM (VALUES
   (1,'whse_basemapping.transport_line'),
   (2,'whse_forest_tenure.ften_road_section_lines_svw'),
@@ -42,4 +42,4 @@ SELECT
   'TOTAL' as bcgw_extraction_date,
   to_char(total_km, 'FM999,999,999') as total_km,
   '' length_pct
-FROM total;
+FROM total) TO STDOUT CSV HEADER;
