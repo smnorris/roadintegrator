@@ -19,8 +19,9 @@ data/dgtl_road_atlas.gdb \
 .integratedroads \
 .integratedroads_sources \
 .integratedroads_vw \
-integratedroads.gpkg.zip \
-summary.md
+data/integratedroads.gpkg \
+data/integratedroads.gpkg.zip \
+summary.csv
 
 
 # Make all targets
@@ -31,6 +32,7 @@ all: $(GENERATED_FILES)
 build:
 	docker-compose build
 	docker-compose up -d
+
 
 # Remove all generated targets, stop and delete the db container
 clean:
@@ -44,6 +46,10 @@ db:
 	psql -c "CREATE EXTENSION postgis_sfcgal"
 	psql -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
 
+
+# -----------------------
+# Data load
+# -----------------------
 
 # shortcut to bcdata command with correct port specified
 bc2pg := bcdata bc2pg --db_url postgresql://$(PGUSER):$(PGPASSWORD)@$(PGHOST):$(PGPORT)/$(PGDATABASE)
@@ -164,7 +170,9 @@ data/dgtl_road_atlas.gdb:
   	  --fid OG_ROAD_AREA_PERMIT_ID
 	touch $@
 
-## preprocessing
+# -----------------------
+# preprocessing
+# -----------------------
 
 # clean active ften roads
 .ften_active: .whse_forest_tenure.ften_road_section_lines_svw
@@ -245,7 +253,9 @@ data/dgtl_road_atlas.gdb:
 	psql -c "CREATE INDEX ON og_permits_row USING GIST (geom)"
 	touch $@
 
+# -----------------------
 # load data to integratedroads table
+# -----------------------
 .integratedroads: .whse_basemapping.transport_line .ften_active .ften_active .results .whse_forest_tenure.abr_road_section_line .whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp .whse_mineral_tenure.og_road_segment_permit_sp .og_permits_row
 	# create output table
 	psql -f sql/integratedroads.sql
@@ -293,7 +303,7 @@ data/dgtl_road_atlas.gdb:
 	touch $@
 
 # dump to geopackage
-data/integratedroads.gpkg.zip: .integratedroads_vw
+data/integratedroads.gpkg: .integratedroads_vw
 	ogr2ogr \
     -f GPKG \
     -progress \
@@ -327,9 +337,11 @@ data/integratedroads.gpkg.zip: .integratedroads_vw
 	  data/integratedroads.gpkg \
 	  "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
+# compress the output gpkg
+data/integratedroads.gpkg.zip: data/integratedroads.gpkg
 	zip -r $@ data/integratedroads.gpkg
 	rm data/integratedroads.gpkg
 
 # summarize outputs in a csv file
-data/summary.csv: .integratedroads_vw
-	psql -f sql/summary.sql > data/summary.csv
+summary.csv: .integratedroads_vw
+	psql -f sql/summary.sql > summary.csv

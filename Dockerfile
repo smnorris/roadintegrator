@@ -2,6 +2,7 @@ FROM osgeo/gdal:ubuntu-small-latest
 
 RUN apt-get -qq install -y --no-install-recommends make
 RUN apt-get -qq install -y --no-install-recommends wget
+RUN apt-get -qq install -y --no-install-recommends zip
 RUN apt-get -qq install -y --no-install-recommends unzip
 RUN apt-get -qq install -y --no-install-recommends parallel
 RUN apt-get -qq install -y --no-install-recommends python3-pip
