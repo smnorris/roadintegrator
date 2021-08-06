@@ -43,18 +43,18 @@ Additional notes:
 
 ## Requirements
 
+- Bash >= 4
+- GNU Make
 - PostgreSQL >= 13.3
 - PostGIS >= 3.1
-- GEOS >= 3.9
 - GDAL >= 3.3.0
 - Python >= 3.8
-- Bash >= 4
 - GNU Parallel
-- GNU Make
-- unzip
-- bcdata >= 0.4.5
+- zip/unzip
+- [bcdata](https://github.com/smnorris/bcdata) >= 0.4.5
 
-To manage these requirements, using Docker is recommended.
+Docker config files are provided to help manage these requirements.
+
 
 ## Setup
 
@@ -63,9 +63,26 @@ Clone the repository, navigate to the project folder:
         git clone https://github.com/smnorris/roadintegrator.git
         cd roadintegrator
 
+### Non-Docker
+
+Install above requirements. `bcdata` can be installed with `pip` on non-Windows systems:
+
+        pip install -r requirements.txt
+
+The scripts depend on postgres connection environment variables - ensure these are set to point to your database:
+
+      PGHOST
+      PGPORT
+      PGUSER
+      PGPASSWORD
+      PGDATABASE
+
+### Docker
+
 Install Docker for your OS:
-    - [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
-    - [Windows](https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe)
+
+- [MacOS](https://download.docker.com/mac/stable/Docker.dmg)
+- [Windows](https://download.docker.com/win/stable/Docker%20Desktop%20Installer.exe)
 
 Build and start the containers:
 
@@ -83,13 +100,14 @@ If you have shut down Docker or the container, start it up again with this comma
 
 ## Usage
 
-To run all the scripts:
+Scripts are run via make. To run the full job:
+
+        make all
+
+If using Docker:
 
         docker-compose run --rm app make all
 
-It can be useful to log errors to file:
-
-        docker-compose run --rm app make all 2> errors.log
 
 ## Duplications
 
@@ -106,7 +124,7 @@ These diagrams illustrate a problematic sample area, showing three similar input
 
 ## Output summary
 
-[Summary of length by data source](summary.md)
+[Summary of length by data source](summary.csv)
 
 
 ## Alternative approaches
