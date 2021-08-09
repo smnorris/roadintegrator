@@ -63,19 +63,24 @@ Clone the repository, navigate to the project folder:
         git clone https://github.com/smnorris/roadintegrator.git
         cd roadintegrator
 
-### Non-Docker
+If you do not have above noted requirements installed on your system, installation via `conda` or Docker is recommended.
 
-Install above requirements. `bcdata` can be installed with `pip` on non-Windows systems:
+### conda
 
-        pip install -r requirements.txt
+Create environment, load requirements/dependencies and activate environment:
 
-The scripts depend on postgres connection environment variables - ensure these are set to point to your database:
+        conda env create -f environment.yml
+        conda activate roadintegrator
+
+The scripts depend on postgres connection environment variables - ensure these are set to point to your database either on your system or in the `environment.yml`:
 
       PGHOST
       PGPORT
       PGUSER
       PGPASSWORD
       PGDATABASE
+
+Note that `conda` does not install the database requirements.
 
 ### Docker
 
@@ -97,6 +102,7 @@ As long as you do not remove the container `roadintegrator-db`, it will retain a
 If you have shut down Docker or the container, start it up again with this command:
 
         docker-compose up -d
+
 
 ## Usage
 
