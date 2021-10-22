@@ -39,6 +39,7 @@ Additional notes:
 
 - the various road data sources are not 100% comprehensive, there may be roads present in the landscape that are not included in the analysis and output product
 - because processing is tiled by BCGS 20k tile, any portion of road falling outside of these tiles will not be included (tile edges do not exactly match the surveyed BC border)
+- attributes from all sources associated with a given road feature are populated when available - attributes for the source feature will be correct but because additional overlapping roads will not always be matched correctly, use additional attribute values with caution (the matching is based only on greatest overlap)
 
 
 ## Requirements
@@ -52,8 +53,6 @@ Additional notes:
 - GNU Parallel
 - zip/unzip
 - [bcdata](https://github.com/smnorris/bcdata) >= 0.4.5
-
-Docker config files are provided to help manage these requirements.
 
 
 ## Setup
