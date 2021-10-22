@@ -21,7 +21,14 @@ data/dgtl_road_atlas.gdb \
 .integratedroads_vw \
 data/integratedroads.gpkg \
 data/integratedroads.gpkg.zip \
-summary.csv
+summary.csv \
+data/transport_line.gpkg \
+data/ften_road_section_lines_svw.gpkg \
+data/rslt_forest_cover_inv_svw.gpkg \
+data/abr_road_section_line.gpkg \
+data/og_petrlm_dev_rds_pre06_pub_sp.gpkg \
+data/og_road_segment_permit_sp.gpkg \
+data/og_road_area_permit_sp.gpkg
 
 
 # Make all targets
@@ -340,8 +347,94 @@ data/integratedroads.gpkg: .integratedroads_vw
 # compress the output gpkg
 data/integratedroads.gpkg.zip: data/integratedroads.gpkg
 	zip -r $@ data/integratedroads.gpkg
-	rm data/integratedroads.gpkg
 
 # summarize outputs in a csv file
 summary.csv: .integratedroads_vw
 	psql -f sql/summary.sql > summary.csv
+
+# dump all source layers to separate geopackages
+data/transport_line.gpkg: .integratedroads_vw
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -nln transport_line \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_basemapping.transport_line" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+
+data/ften_road_section_lines_svw.gpkg: .integratedroads_vw
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -nln ften_road_section_lines_svw \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_forest_tenure.ften_road_section_lines_svw" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+
+
+data/rslt_forest_cover_inv_svw.gpkg: .integratedroads_vw
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTIPOLYGON \
+      -nln rslt_forest_cover_inv_svw \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_forest_vegetation.rslt_forest_cover_inv_svw" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+
+data/abr_road_section_line.gpkg:
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt LINESTRING \
+      -update \
+      -append \
+      -nln abr_road_section_line \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_forest_tenure.abr_road_section_line" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+
+data/og_petrlm_dev_rds_pre06_pub_sp.gpkg: .integratedroads_vw
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -update \
+      -append \
+      -nln og_petrlm_dev_rds_pre06_pub_sp \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+
+data/og_road_segment_permit_sp.gpkg: .integratedroads_vw
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -update \
+      -append \
+      -nln og_road_segment_permit_sp \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_mineral_tenure.og_road_segment_permit_sp" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+
+data/og_road_area_permit_sp.gpkg: .integratedroads_vw
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTIPOLYGON \
+      -update \
+      -append \
+      -nln og_road_area_permit_sp \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_mineral_tenure.og_road_area_permit_sp" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
