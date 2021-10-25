@@ -3,15 +3,12 @@
 GENERATED_FILES = .whse_basemapping.bcgs_20k_grid \
 data/dgtl_road_atlas.gdb \
 .whse_basemapping.transport_line \
-.whse_basemapping.transport_line_structure_code \
-.whse_basemapping.transport_line_type_code \
-.whse_basemapping.transport_line_surface_code \
-.whse_forest_tenure.ften_road_section_lines_svw \
-.whse_forest_vegetation.rslt_forest_cover_inv_svw \
+data/ften_road_section_lines_svw.gpkg \
+data/rslt_forest_cover_inv_svw.gpkg \
 .whse_forest_tenure.abr_road_section_line \
-.whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp \
-.whse_mineral_tenure.og_road_segment_permit_sp \
-.whse_mineral_tenure.og_road_area_permit_sp \
+data/og_petrlm_dev_rds_pre06_pub_sp.gpkg \
+data/og_road_segment_permit_sp.gpkg \
+data/og_road_area_permit_sp.gpkg \
 .ften_active \
 .ften_retired \
 .results \
@@ -19,17 +16,10 @@ data/dgtl_road_atlas.gdb \
 .integratedroads \
 .integratedroads_sources \
 .integratedroads_vw \
-data/integratedroads.gpkg \
-data/integratedroads.gpkg.zip \
+integratedroads.gpkg \
+integratedroads.gpkg.zip \
 summary.csv \
-data/transport_line.gpkg \
-data/ften_road_section_lines_svw.gpkg \
-data/rslt_forest_cover_inv_svw.gpkg \
-data/abr_road_section_line.gpkg \
-data/og_petrlm_dev_rds_pre06_pub_sp.gpkg \
-data/og_road_segment_permit_sp.gpkg \
-data/og_road_area_permit_sp.gpkg
-
+integratedroads_source_data.zip
 
 # Make all targets
 all: $(GENERATED_FILES)
@@ -84,16 +74,15 @@ data/dgtl_road_atlas.gdb:
 	  -where "TRANSPORT_LINE_SURFACE_CODE <> 'B'" \
 	  data/dgtl_road_atlas.gdb \
 	  TRANSPORT_LINE
+
 	# Because we are not loading this table via bc2pg, no record is added to bcdata table.
 	# Do this manually here so we know what day this data was extracted
 	psql -c "INSERT INTO bcdata (table_name, date_downloaded) \
 	   SELECT 'whse_basemapping.transport_line', CURRENT_TIMESTAMP \
 	   ON CONFLICT (table_name) DO \
 	   UPDATE SET date_downloaded = EXCLUDED.date_downloaded;"
-	touch $@
 
-# load DRA structure/type/surface lookups
-.whse_basemapping.transport_line_structure_code: data/dgtl_road_atlas.gdb
+	# load DRA structure/type/surface lookups
 	ogr2ogr \
 	  -f PostgreSQL \
 	  "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)" \
@@ -101,9 +90,6 @@ data/dgtl_road_atlas.gdb:
 	  -nln whse_basemapping.transport_line_structure_code \
 	  data/dgtl_road_atlas.gdb \
 	  TRANSPORT_LINE_STRUCTURE_CODE
-	touch $@
-
-.whse_basemapping.transport_line_type_code: data/dgtl_road_atlas.gdb
 	ogr2ogr \
 	  -f PostgreSQL \
 	  "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)" \
@@ -111,9 +97,6 @@ data/dgtl_road_atlas.gdb:
 	  -nln whse_basemapping.transport_line_type_code \
 	  data/dgtl_road_atlas.gdb \
 	  TRANSPORT_LINE_TYPE_CODE
-	touch $@
-
-.whse_basemapping.transport_line_surface_code: data/dgtl_road_atlas.gdb
 	ogr2ogr \
 	  -f PostgreSQL \
 	  "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)" \
@@ -121,22 +104,41 @@ data/dgtl_road_atlas.gdb:
 	  -nln whse_basemapping.transport_line_surface_code \
 	  data/dgtl_road_atlas.gdb \
 	  TRANSPORT_LINE_SURFACE_CODE
+	# note that because this is a file source, data is not dumped back to file
 	touch $@
 
 # ften roads
-.whse_forest_tenure.ften_road_section_lines_svw:
+data/ften_road_section_lines_svw.gpkg:
 	$(bc2pg) WHSE_FOREST_TENURE.FTEN_ROAD_SECTION_LINES_SVW \
 	  --fid MAP_LABEL \
 	  --query "LIFE_CYCLE_STATUS_CODE IN ('ACTIVE','RETIRED')"
-	touch $@
+	# dump to file
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -nln ften_road_section_lines_svw \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_forest_tenure.ften_road_section_lines_svw" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
 # Results road polygons
-.whse_forest_vegetation.rslt_forest_cover_inv_svw:
+data/rslt_forest_cover_inv_svw.gpkg:
 	$(bc2pg) WHSE_FOREST_VEGETATION.RSLT_FOREST_COVER_INV_SVW \
   	--fid FOREST_COVER_ID \
   	--query "STOCKING_STATUS_CODE = 'NP' AND STOCKING_TYPE_CODE IN ('RD','UNN') \
   	         AND SILV_POLYGON_NUMBER NOT IN ('landing', 'lnd') AND GEOMETRY_EXIST_IND = 'Y'"
-	touch $@
+	# dump to file
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTIPOLYGON \
+      -nln rslt_forest_cover_inv_svw \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_forest_vegetation.rslt_forest_cover_inv_svw" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
 # As-built roads
 # **NOTE**
@@ -157,32 +159,67 @@ data/dgtl_road_atlas.gdb:
 	   SELECT 'whse_forest_tenure.abr_road_section_line', CURRENT_TIMESTAMP \
 	   ON CONFLICT (table_name) DO \
 	   UPDATE SET date_downloaded = EXCLUDED.date_downloaded;"
+	# note that because this is a file source, data is not dumped back to file
 	touch $@
 
 # Oil and Gas Dev, pre06
-.whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp:
+data/og_petrlm_dev_rds_pre06_pub_sp.gpkg:
 	$(bc2pg) WHSE_MINERAL_TENURE.OG_PETRLM_DEV_RDS_PRE06_PUB_SP \
 	  --fid OG_PETRLM_DEV_RD_PRE06_PUB_ID
-	touch $@
+	# dump to file
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -update \
+      -append \
+      -nln og_petrlm_dev_rds_pre06_pub_sp \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
 # Oil and Gas permits, road segments
-.whse_mineral_tenure.og_road_segment_permit_sp:
+data/og_road_segment_permit_sp.gpkg:
 	$(bc2pg) WHSE_MINERAL_TENURE.OG_ROAD_SEGMENT_PERMIT_SP \
 	  --fid OG_ROAD_SEGMENT_PERMIT_ID
-	touch $@
+	# dump to file
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTILINESTRING \
+      -update \
+      -append \
+      -nln og_road_segment_permit_sp \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_mineral_tenure.og_road_segment_permit_sp" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
 # Oil and Gas permits, road right of way (polygons)
-.whse_mineral_tenure.og_road_area_permit_sp:
+data/og_road_area_permit_sp.gpkg:
 	$(bc2pg) WHSE_MINERAL_TENURE.OG_ROAD_AREA_PERMIT_SP \
   	  --fid OG_ROAD_AREA_PERMIT_ID
-	touch $@
+	# dump to file
+	ogr2ogr \
+      -f GPKG \
+      -progress \
+      -nlt MULTIPOLYGON \
+      -update \
+      -append \
+      -nln og_road_area_permit_sp \
+      -lco GEOMETRY_NULLABLE=NO \
+	  -sql "SELECT * FROM whse_mineral_tenure.og_road_area_permit_sp" \
+	  $@ \
+      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
 # -----------------------
 # preprocessing
 # -----------------------
 
 # clean active ften roads
-.ften_active: .whse_forest_tenure.ften_road_section_lines_svw
+.ften_active: data/ften_road_section_lines_svw.gpkg
+	psql -c "DROP TABLE IF EXISTS ften_active"
 	psql -c "CREATE TABLE ften_active \
 	( ften_active_id serial primary key, \
 	  map_label character varying, \
@@ -195,13 +232,14 @@ data/dgtl_road_atlas.gdb:
 	    ON ST_Intersects(t.geom, r.geom) \
 	    WHERE life_cycle_status_code = 'ACTIVE' \
 	    ORDER BY map_tile" \
-	    | parallel --progress --joblog $@.log \
+	    | parallel --jobs -2 --progress --joblog $@.log \
 	      psql -f sql/ften_active.sql -v tile={1}
 	psql -c "CREATE INDEX on ften_active USING GIST (geom);"
 	touch $@
 
 # clean retired ften roads
-.ften_retired: .whse_forest_tenure.ften_road_section_lines_svw
+.ften_retired: data/ften_road_section_lines_svw.gpkg
+	psql -c "DROP TABLE IF EXISTS ften_retired"
 	psql -c "CREATE TABLE ften_retired \
 	( ften_retired_id serial primary key, \
 	  map_label character varying, \
@@ -214,13 +252,14 @@ data/dgtl_road_atlas.gdb:
 	    ON ST_Intersects(t.geom, r.geom) \
 	    WHERE life_cycle_status_code = 'RETIRED' \
 	    ORDER BY map_tile" \
-	    | parallel --progress --joblog $@.log \
+	    | parallel --jobs -2 --progress --joblog $@.log \
 	      psql -f sql/ften_retired.sql -v tile={1}
 	psql -c "CREATE INDEX on ften_retired USING GIST (geom);"
 	touch $@
 
 # convert RESULTS polygon roads to lines
-.results: .whse_forest_vegetation.rslt_forest_cover_inv_svw
+.results: data/rslt_forest_cover_inv_svw.gpkg
+	psql -c "DROP TABLE IF EXISTS results"
 	psql -c "CREATE TABLE results \
 	( results_id serial primary key, \
 	  map_tile character varying, \
@@ -232,7 +271,7 @@ data/dgtl_road_atlas.gdb:
 	    ON ST_Intersects(t.geom, r.geom) \
 	    WHERE ST_ISValid(r.geom) \
 	    ORDER BY t.map_tile" \
-	    | parallel --progress --joblog $@.log \
+	    | parallel --jobs -2 --progress --joblog $@.log \
 	      psql -f sql/roadpoly2line.sql \
 	        -v tile={1} \
 	        -v in_table=whse_forest_vegetation.rslt_forest_cover_inv_svw \
@@ -241,7 +280,8 @@ data/dgtl_road_atlas.gdb:
 	touch $@
 
 # convert OG permit right of ways (poly) to lines
-.og_permits_row: .whse_mineral_tenure.og_road_area_permit_sp
+.og_permits_row: data/og_road_area_permit_sp.gpkg
+	psql -c "DROP TABLE IF EXISTS og_permits_row"
 	psql -c "CREATE TABLE og_permits_row \
 	( og_permits_row_id serial primary key, \
 	  map_tile character varying, \
@@ -252,7 +292,7 @@ data/dgtl_road_atlas.gdb:
 	    INNER JOIN whse_mineral_tenure.og_road_area_permit_sp r \
 	    ON ST_Intersects(t.geom, r.geom) \
 	    ORDER BY t.map_tile" \
-	     | parallel --progress --joblog $@.log \
+	     | parallel --jobs -2 --progress --joblog $@.log \
 	       psql -f sql/roadpoly2line.sql \
 	       -v tile={1} \
 	       -v in_table=whse_mineral_tenure.og_road_area_permit_sp \
@@ -263,8 +303,16 @@ data/dgtl_road_atlas.gdb:
 # -----------------------
 # load data to integratedroads table
 # -----------------------
-.integratedroads: .whse_basemapping.transport_line .ften_active .ften_active .results .whse_forest_tenure.abr_road_section_line .whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp .whse_mineral_tenure.og_road_segment_permit_sp .og_permits_row
+.integratedroads: .whse_basemapping.transport_line \
+.ften_active \
+.ften_active \
+.results \
+.whse_forest_tenure.abr_road_section_line \
+data/og_petrlm_dev_rds_pre06_pub_sp.gpkg \
+data/og_road_segment_permit_sp.gpkg \
+.og_permits_row
 	# create output table
+	psql -c "DROP TABLE IF EXISTS integratedroads"
 	psql -f sql/integratedroads.sql
 
 	# load DRA (just dump everything in, these features remain unchanged)
@@ -275,7 +323,7 @@ data/dgtl_road_atlas.gdb:
 	    INNER JOIN whse_basemapping.transport_line r \
 	    ON ST_Intersects(t.geom, r.geom) \
 	    ORDER BY substring(t.map_tile from 1 for 4)" \
-	    | parallel psql -f sql/dra.sql -v tile={1}
+	    | parallel --jobs -2 psql -f sql/dra.sql -v tile={1}
 
 	# load all other sources
 	./integrateroads.sh
@@ -290,10 +338,11 @@ data/dgtl_road_atlas.gdb:
 
 # for all output features, identify what other source roads intersect with the road's 7m buffer
 .integratedroads_sources:
+	psql -c "DROP TABLE IF EXISTS integratedroads_sources"
 	psql -f sql/integratedroads_sources.sql
 	psql -tXA \
 	-c "SELECT DISTINCT map_tile FROM integratedroads ORDER BY map_tile" \
-	    | parallel --progress --joblog $@.log \
+	    | parallel --jobs -2 --progress --joblog $@.log \
 	      psql -f sql/load_sources.sql -v tile={1}
 	psql -c "CREATE INDEX ON integratedroads_sources (integratedroads_id)"
 	psql -c "CREATE INDEX ON integratedroads_sources (map_label)"
@@ -306,11 +355,12 @@ data/dgtl_road_atlas.gdb:
 
 # create output view with required data/columns
 .integratedroads_vw: .integratedroads .integratedroads_sources
+	psql -c "DROP MATERIALIZED VIEW IF EXISTS integratedroads_vw"
 	psql -f sql/integratedroads_vw.sql
 	touch $@
 
 # dump to geopackage
-data/integratedroads.gpkg: .integratedroads_vw
+integratedroads.gpkg: .integratedroads_vw
 	ogr2ogr \
     -f GPKG \
     -progress \
@@ -318,7 +368,7 @@ data/integratedroads.gpkg: .integratedroads_vw
     -nln integratedroads \
     -lco GEOMETRY_NULLABLE=NO \
     -sql "SELECT * FROM integratedroads_vw" \
-    data/integratedroads.gpkg \
+    integratedroads.gpkg \
     "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)" \
 
 	# summarize road source by length and percentage in the output gpkg
@@ -341,100 +391,17 @@ data/integratedroads.gpkg: .integratedroads_vw
 	FROM integratedroads_vw, total t \
 	GROUP BY bcgw_source, to_char(bcgw_extraction_date, 'YYYY-MM-DD'), total_length \
 	ORDER BY bcgw_source" \
-	  data/integratedroads.gpkg \
-	  "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+	integratedroads.gpkg \
+	"PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
 
 # compress the output gpkg
-data/integratedroads.gpkg.zip: data/integratedroads.gpkg
-	zip -r $@ data/integratedroads.gpkg
+integratedroads.gpkg.zip: integratedroads.gpkg
+	zip -r $@ integratedroads.gpkg
 
 # summarize outputs in a csv file
 summary.csv: .integratedroads_vw
 	psql -f sql/summary.sql > summary.csv
 
-# dump all source layers to separate geopackages
-data/transport_line.gpkg: .integratedroads_vw
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt MULTILINESTRING \
-      -nln transport_line \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_basemapping.transport_line" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
-
-data/ften_road_section_lines_svw.gpkg: .integratedroads_vw
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt MULTILINESTRING \
-      -nln ften_road_section_lines_svw \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_forest_tenure.ften_road_section_lines_svw" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
-
-
-data/rslt_forest_cover_inv_svw.gpkg: .integratedroads_vw
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt MULTIPOLYGON \
-      -nln rslt_forest_cover_inv_svw \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_forest_vegetation.rslt_forest_cover_inv_svw" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
-
-data/abr_road_section_line.gpkg:
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt LINESTRING \
-      -update \
-      -append \
-      -nln abr_road_section_line \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_forest_tenure.abr_road_section_line" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
-
-data/og_petrlm_dev_rds_pre06_pub_sp.gpkg: .integratedroads_vw
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt MULTILINESTRING \
-      -update \
-      -append \
-      -nln og_petrlm_dev_rds_pre06_pub_sp \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
-
-data/og_road_segment_permit_sp.gpkg: .integratedroads_vw
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt MULTILINESTRING \
-      -update \
-      -append \
-      -nln og_road_segment_permit_sp \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_mineral_tenure.og_road_segment_permit_sp" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
-
-data/og_road_area_permit_sp.gpkg: .integratedroads_vw
-	ogr2ogr \
-      -f GPKG \
-      -progress \
-      -nlt MULTIPOLYGON \
-      -update \
-      -append \
-      -nln og_road_area_permit_sp \
-      -lco GEOMETRY_NULLABLE=NO \
-	  -sql "SELECT * FROM whse_mineral_tenure.og_road_area_permit_sp" \
-	  $@ \
-      "PG:host=$(PGHOST) user=$(PGUSER) dbname=$(PGDATABASE) port=$(PGPORT)"
+# archive the source data
+integratedroads_source_data.zip: .integratedroads_vw
+	zip -r integratedroads_source_data.zip data
