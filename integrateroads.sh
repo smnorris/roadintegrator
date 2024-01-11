@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -exo pipefail
+
 
 # define all source tables and their primary keys in array
 # bash arrays are like older python dicts, they are not ordered...
@@ -15,7 +17,7 @@ tables["og_permits_row"]="og_permits_row_id"; ordered+=("og_permits_row")
 for source_table in "${ordered[@]}"
 do
   echo "Processing: $source_table"
-  psql -tXA \
+  psql $DATABASE_URL -tXA \
   -c "SELECT DISTINCT t.map_tile
       FROM whse_basemapping.bcgs_20k_grid t
       INNER JOIN $source_table r

@@ -48,9 +48,10 @@ Additional notes:
 - PostgreSQL >= 14
 - PostGIS >= 3.3
 - GDAL >= 3.6
-- Python >= 3.10
+- Python >= 3.9
 - [bcdata](https://github.com/smnorris/bcdata) >= 0.9.1
 
+Tested with versions as noted in `Dockerfile`
 
 ## Setup
 
