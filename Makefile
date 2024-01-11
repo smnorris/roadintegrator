@@ -40,12 +40,13 @@ clean:
 	rm -Rf $(GENERATED_FILES)
 	docker-compose down
 
-# create db, add required extensions and functions, plus hidden folder for empty make targets
+# create db, add required extensions/functions, create ouput tables/views
 .make/db:
 	$(PSQL) -c "CREATE DATABASE roadintegrator" postgres
 	$(PSQL) -c "CREATE EXTENSION postgis"
 	$(PSQL) -c "CREATE EXTENSION postgis_sfcgal"
 	$(PSQL) -f sql/ST_ApproximateMedialAxisIgnoreErrors.sql
+	$(PSQL) -f sql/integratedroads.sql
 	mkdir -p .make
 
 
@@ -236,7 +237,7 @@ data/dgtl_road_atlas.gdb:
 	    WHERE life_cycle_status_code = 'ACTIVE' \
 	    ORDER BY map_tile" \
 	    | parallel --jobs -2 --progress --joblog ften_active.log \
-	      $(PSQL) -f sql/ften_active.sql -v tile={1}
+	      $(PSQL) -f sql/preprocess_ften_active.sql -v tile={1}
 	$(PSQL) -c "CREATE INDEX on ften_active USING GIST (geom);"
 	touch $@
 
@@ -256,7 +257,7 @@ data/dgtl_road_atlas.gdb:
 	    WHERE life_cycle_status_code = 'RETIRED' \
 	    ORDER BY map_tile" \
 	    | parallel --jobs -2 --progress --joblog ften_retired.log \
-	      $(PSQL) -f sql/ften_retired.sql -v tile={1}
+	      $(PSQL) -f sql/preprocess_ften_retired.sql -v tile={1}
 	$(PSQL) -c "CREATE INDEX on ften_retired USING GIST (geom);"
 	touch $@
 
@@ -314,9 +315,8 @@ data/dgtl_road_atlas.gdb:
 	data/og_petrlm_dev_rds_pre06_pub_sp.gpkg \
 	data/og_road_segment_permit_sp.gpkg \
 	.make/og_permits_row
-	# create output table
-	$(PSQL) -c "DROP TABLE IF EXISTS integratedroads"
-	$(PSQL) -f sql/integratedroads.sql
+	# clear output table
+	$(PSQL) -c "truncate integratedroads"
 
 	# load DRA (just dump everything in, these features remain unchanged)
 	$(PSQL) -tXA \
@@ -326,7 +326,7 @@ data/dgtl_road_atlas.gdb:
 	    INNER JOIN whse_basemapping.transport_line r \
 	    ON ST_Intersects(t.geom, r.geom) \
 	    ORDER BY substring(t.map_tile from 1 for 4)" \
-	    | parallel --jobs -2 $(PSQL) -f sql/dra.sql -v tile={1}
+	    | parallel --jobs -2 $(PSQL) -f sql/load_dra.sql -v tile={1}
 
 	# load all other sources
 	./integrateroads.sh
@@ -341,8 +341,6 @@ data/dgtl_road_atlas.gdb:
 
 # for all output features, identify what other source roads intersect with the road's 7m buffer
 .make/integratedroads_sources:
-	$(PSQL) -c "DROP TABLE IF EXISTS integratedroads_sources"
-	$(PSQL) -f sql/integratedroads_sources.sql
 	$(PSQL) -tXA \
 	-c "SELECT DISTINCT map_tile FROM integratedroads ORDER BY map_tile" \
 	    | parallel --jobs -2 --progress --joblog integratedroads_sources.log \
@@ -358,8 +356,7 @@ data/dgtl_road_atlas.gdb:
 
 # create output view with required data/columns
 .make/integratedroads_vw: .make/integratedroads .make/integratedroads_sources
-	$(PSQL) -c "DROP MATERIALIZED VIEW IF EXISTS integratedroads_vw"
-	$(PSQL) -f sql/integratedroads_vw.sql
+	$(PSQL) -c "REFRESH MATERIALIZED VIEW integratedroads_vw"
 	touch $@
 
 # dump to geopackage
@@ -403,7 +400,8 @@ integratedroads.gpkg.zip: integratedroads.gpkg
 
 # summarize outputs in a csv file
 summary.csv: .make/integratedroads_vw
-	$(PSQL) -f sql/summary.sql > summary.csv
+	$(PSQL) -c "refresh materialized view integrateroads_summary_vw"
+	$(PSQL) --csv -c "select * from integratedroads_summary_vw" > summary.csv
 
 # archive the source data
 integratedroads_source_data.zip: .make/integratedroads_vw
