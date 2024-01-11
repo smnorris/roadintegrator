@@ -400,7 +400,7 @@ integratedroads.gpkg.zip: integratedroads.gpkg
 
 # summarize outputs in a csv file
 summary.csv: .make/integratedroads_vw
-	$(PSQL) -c "refresh materialized view integrateroads_summary_vw"
+	$(PSQL) -c "refresh materialized view integratedroads_summary_vw"
 	$(PSQL) --csv -c "select * from integratedroads_summary_vw" > summary.csv
 
 # archive the source data

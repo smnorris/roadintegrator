@@ -1,3 +1,9 @@
 priority,source,extraction_date,length_km,length_pct
-1,whse_basemapping.transport_line,2024-01-11,"786,861",100.00
-"","",TOTAL,"786,861",""
+1,whse_basemapping.transport_line,2024-01-11,"786,861",81.90
+2,whse_forest_tenure.ften_road_section_lines_svw,2024-01-11,"97,066",10.10
+3,whse_forest_vegetation.rslt_forest_cover_inv_svw,2024-01-11,"66,740",6.95
+4,whse_forest_tenure.abr_road_section_line,2024-01-11,"1,588",0.17
+5,whse_mineral_tenure.og_petrlm_dev_rds_pre06_pub_sp,2024-01-11,854,0.09
+6,whse_mineral_tenure.og_road_segment_permit_sp,2024-01-11,"7,425",0.77
+7,whse_mineral_tenure.og_road_area_permit_sp,2024-01-11,220,0.02
+,,TOTAL,"960,753",
