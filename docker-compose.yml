@@ -1,7 +1,7 @@
 version: "3.9"  
 services:
   db:
-    image: postgis/postgis:13-master
+    image: postgis/postgis:16-master
     container_name: roadintegrator-db
     ports:
       - 8001:5432
@@ -20,11 +20,7 @@ services:
     volumes:
       - "./:/home/roadintegrator"
     environment:
-      - PGHOST=db
-      - PGPORT=5432
-      - PGUSER=postgres
-      - PGPASSWORD=postgres
-      - PGDATABASE=roadintegrator
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/roadintegrator
     depends_on:
       db:
         condition: service_healthy

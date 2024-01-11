@@ -44,15 +44,12 @@ Additional notes:
 
 ## Requirements
 
-- Bash >= 4
-- GNU Make
-- PostgreSQL >= 13.3
-- PostGIS >= 3.1
-- GDAL >= 3.3.0
-- Python >= 3.8
-- GNU Parallel
-- zip/unzip
-- [bcdata](https://github.com/smnorris/bcdata) >= 0.4.5
+- bash/make/wget/zip/unzip/parallel
+- PostgreSQL >= 14
+- PostGIS >= 3.3
+- GDAL >= 3.6
+- Python >= 3.10
+- [bcdata](https://github.com/smnorris/bcdata) >= 0.9.1
 
 
 ## Setup
@@ -62,24 +59,8 @@ Clone the repository, navigate to the project folder:
         git clone https://github.com/smnorris/roadintegrator.git
         cd roadintegrator
 
-If you do not have above noted requirements installed on your system, installation via `conda` or Docker is recommended.
+If you do not have above noted requirements installed on your system, installation via `conda` or Docker is recommended. An `environment.yml` is provided for users familiar with `conda`, instructions for Docker usage are below.
 
-### conda
-
-Create environment, load requirements/dependencies and activate environment:
-
-        conda env create -f environment.yml
-        conda activate roadintegrator
-
-The scripts depend on postgres connection environment variables - ensure these are set to point to your database either on your system or in the `environment.yml`:
-
-      PGHOST
-      PGPORT
-      PGUSER
-      PGPASSWORD
-      PGDATABASE
-
-Note that `conda` does not install the database requirements.
 
 ### Docker
 
@@ -93,26 +74,24 @@ Build and start the containers:
         docker-compose build
         docker-compose up -d
 
-Create the database:
-
-        docker-compose run --rm app make db
-
 As long as you do not remove the container `roadintegrator-db`, it will retain all the data you put in it.
 If you have shut down Docker or the container, start it up again with this command:
 
         docker-compose up -d
 
-
 ## Usage
 
 Scripts are run via make. To run the full job:
 
-        make all
+        make
 
 If using Docker:
 
-        docker-compose run --rm app make all
+        docker-compose run --rm app make
 
+Note that connecting to the dockerized database from your local OS is possible via the port specified in `docker-compose.yml`:
+
+        psql postgresql://postgres:postgres@localhost:8001/roadintegrator
 
 ## Duplications
 

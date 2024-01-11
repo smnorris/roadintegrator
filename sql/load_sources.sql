@@ -2,7 +2,7 @@
 -- load_sources.sql
 --
 -- Find *all* additional sources that intersect the 7m buff of every road loaded to integratedroads table.
--- Look at each source separately, in order of priority, finding roads of lower priority that inteersect the 7m buffer.
+-- Look at each source separately, in order of priority, finding roads of lower priority that intersect the 7m buffer.
 -- For polygonal road sources, also identify which polygonal road is the source as the poly ids are not
 -- retained in integratedroads table.
 -- ----------------------------

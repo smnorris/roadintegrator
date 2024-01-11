@@ -43,7 +43,7 @@ bcgw AS
 SELECT
   i.integratedroads_id AS INTEGRATEDROADS_ID,
   bcgw.bcgw_source AS BCGW_SOURCE,
-  m.date_downloaded AS BCGW_EXTRACTION_DATE,
+  m.latest_download AS BCGW_EXTRACTION_DATE,
   map_tile AS MAP_TILE,
   i.transport_line_id AS TRANSPORT_LINE_ID,
   dra_struct.description                    AS DRA_STRUCTURE,
@@ -101,7 +101,7 @@ SELECT
 FROM sourced i
 INNER JOIN bcgw 
   ON i.integratedroads_id = bcgw.integratedroads_id
-INNER JOIN bcdata m 
+INNER JOIN bcdata.log m
   ON bcgw.bcgw_source = UPPER(m.table_name)
 LEFT OUTER JOIN whse_basemapping.transport_line dra 
   ON i.transport_line_id = dra.transport_line_id
