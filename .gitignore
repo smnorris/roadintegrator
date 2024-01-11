@@ -2,5 +2,5 @@
 *.gpkg
 *.gdb
 *.zip
-.*
+.make*
 !.gitignore
