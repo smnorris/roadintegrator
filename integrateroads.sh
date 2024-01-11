@@ -22,5 +22,5 @@ do
       ON ST_Intersects(t.geom, r.geom)
       ORDER BY t.map_tile" \
       | parallel --progress --joblog .integratedroads.log \
-        psql -f sql/load_difference.sql -v tile={1} -v src_roads=$source_table -v pk=${tables[$source_table]}
+        psql $DATABASE_URL -f sql/load_difference.sql -v ON_ERROR_STOP=1 -v tile={1} -v src_roads=$source_table -v pk=${tables[$source_table]}
 done
