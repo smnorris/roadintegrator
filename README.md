@@ -1,5 +1,10 @@
 # roadintegrator
 
+
+*Development and maintenance of this project has been moved to [bcgov/CE_integratedroads](https://github.com/bcgov/CE_integratedroads)*. Please file any issues/PRs at the new location.
+
+
+
 Quckly merge various BC road data sources into a single layer.
 
 ## Sources
